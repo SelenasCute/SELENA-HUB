@@ -4,7 +4,6 @@
  @uniquadev - 2025
 =============================================]]
 
-local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -68,22 +67,13 @@ function ToggleUI.Create(window)
 	hoverStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 	hoverStroke.Parent = hover
 
-	-- Hover effect
-	local defaultSize = button.Size
-	local hoverTweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
+	-- Hover text only (tanpa tween)
 	button.MouseEnter:Connect(function()
 		hover.Visible = true
-		TweenService:Create(button, hoverTweenInfo, {
-			Size = UDim2.new(defaultSize.X.Scale * 1.1, 0, defaultSize.X.Scale * 1.1, 0)
-		}):Play()
 	end)
 
 	button.MouseLeave:Connect(function()
 		hover.Visible = false
-		TweenService:Create(button, hoverTweenInfo, {
-			Size = defaultSize
-		}):Play()
 	end)
 
 	-- Draggable system
