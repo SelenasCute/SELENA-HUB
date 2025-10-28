@@ -20,8 +20,8 @@ function ToggleUI.Create(window)
 	gui.Name = "SelenaHub_Toggle"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	gui.Enabled = false
 	gui.Parent = PlayerGui
-	gui.Enabled = false -- ⬅️ Tambahkan ini
 
 	local button = Instance.new("ImageButton")
 	button.Name = "ToggleButton"
@@ -38,6 +38,10 @@ function ToggleUI.Create(window)
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = button
 
+	local aspect = Instance.new("UIAspectRatioConstraint")
+	aspect.AspectRatio = 1
+	aspect.Parent = button
+
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 3
 	stroke.Color = Color3.fromRGB(255, 255, 255)
@@ -46,9 +50,9 @@ function ToggleUI.Create(window)
 
 	local hover = Instance.new("TextLabel")
 	hover.Name = "Hover"
-	hover.AnchorPoint = Vector2.new(0, 0)
-	hover.Position = UDim2.new(-1.775, 0,-0.631, 0)
-	hover.Size = UDim2.new(2, 0, 0.8, 0)
+	hover.AnchorPoint = Vector2.new(0, 0.5)
+	hover.Position = UDim2.new(-1.775, 0, -0.497, 0)
+	hover.Size = UDim2.new(2.775, 0, 0.619, 0)
 	hover.BackgroundTransparency = 1
 	hover.Text = "Open Selena HUB"
 	hover.TextScaled = true
@@ -58,29 +62,31 @@ function ToggleUI.Create(window)
 	hover.Visible = false
 	hover.Parent = button
 
-	local hover_stroke = Instance.new("UIStroke")
-	hover_stroke.Thickness = 2
-	hover_stroke.Color = Color3.fromRGB(255, 255, 255)
-	hover_stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
-	hover_stroke.Parent = hover
+	local hoverStroke = Instance.new("UIStroke")
+	hoverStroke.Thickness = 2
+	hoverStroke.Color = Color3.fromRGB(0, 0, 0)
+	hoverStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	hoverStroke.Parent = hover
 
 	-- Hover effect
 	local defaultSize = button.Size
+	local hoverTweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
 	button.MouseEnter:Connect(function()
 		hover.Visible = true
-		TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Size = UDim2.new(defaultSize.X.Scale * 1.1, 0, defaultSize.Y.Scale * 1.1, 0)
+		TweenService:Create(button, hoverTweenInfo, {
+			Size = UDim2.new(defaultSize.X.Scale * 1.1, 0, defaultSize.X.Scale * 1.1, 0)
 		}):Play()
 	end)
-	
+
 	button.MouseLeave:Connect(function()
 		hover.Visible = false
-		TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		TweenService:Create(button, hoverTweenInfo, {
 			Size = defaultSize
 		}):Play()
 	end)
 
-	-- Draggable stabil
+	-- Draggable system
 	local dragging = false
 	local dragStart, startPos
 
@@ -120,14 +126,14 @@ function ToggleUI.Create(window)
 			hover.Visible = false
 		end)
 	end
-	
+
 	if window.OnClose then
 		window:OnClose(function()
 			gui.Enabled = true
 			hover.Visible = false
 		end)
 	end
-	
+
 	if window.OnDestroy then
 		window:OnDestroy(function()
 			gui:Destroy()
