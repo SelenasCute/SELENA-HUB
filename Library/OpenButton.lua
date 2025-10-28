@@ -21,6 +21,7 @@ function ToggleUI.Create(window)
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = PlayerGui
+	gui.Enabled = false -- ⬅️ Tambahkan ini
 
 	local button = Instance.new("ImageButton")
 	button.Name = "ToggleButton"
@@ -56,7 +57,7 @@ function ToggleUI.Create(window)
 	hover.Visible = false
 	hover.Parent = button
 
-	-- Hover Tween
+	-- Hover effect
 	local defaultSize = button.Size
 	button.MouseEnter:Connect(function()
 		hover.Visible = true
@@ -64,7 +65,7 @@ function ToggleUI.Create(window)
 			Size = UDim2.new(defaultSize.X.Scale * 1.1, 0, defaultSize.Y.Scale * 1.1, 0)
 		}):Play()
 	end)
-
+	
 	button.MouseLeave:Connect(function()
 		hover.Visible = false
 		TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -105,19 +106,21 @@ function ToggleUI.Create(window)
 		window:Toggle()
 	end)
 
-	-- Sembunyi & tampil otomatis
+	-- Hubungkan dengan event window
 	if window.OnOpen then
 		window:OnOpen(function()
 			gui.Enabled = false
+			hover.Visible = false
 		end)
 	end
-
+	
 	if window.OnClose then
 		window:OnClose(function()
 			gui.Enabled = true
+			hover.Visible = false
 		end)
 	end
-
+	
 	if window.OnDestroy then
 		window:OnDestroy(function()
 			gui:Destroy()
