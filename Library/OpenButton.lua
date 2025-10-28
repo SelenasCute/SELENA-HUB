@@ -27,7 +27,7 @@ function ToggleUI.Create(window)
 	button.Name = "ToggleButton"
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(0.975, 0, 0.5, 0)
-	button.Size = UDim2.new(0.035, 0, 0.065, 0)
+	button.Size = UDim2.new(0.031, 0, 0.056, 0)
 	button.BackgroundColor3 = Color3.fromRGB(255, 115, 230)
 	button.Image = "rbxassetid://112969347193102"
 	button.BorderSizePixel = 0
@@ -46,16 +46,23 @@ function ToggleUI.Create(window)
 
 	local hover = Instance.new("TextLabel")
 	hover.Name = "Hover"
-	hover.AnchorPoint = Vector2.new(1, 0.5)
-	hover.Position = UDim2.new(-0.2, 0, 0.5, 0)
+	hover.AnchorPoint = Vector2.new(0, 0)
+	hover.Position = UDim2.new(-1.775, 0,-0.631, 0)
 	hover.Size = UDim2.new(2, 0, 0.8, 0)
 	hover.BackgroundTransparency = 1
 	hover.Text = "Open Selena HUB"
 	hover.TextScaled = true
+	hover.TextXAlignment = Enum.TextXAlignment.Right
 	hover.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
 	hover.TextColor3 = Color3.new(1, 1, 1)
 	hover.Visible = false
 	hover.Parent = button
+
+	local hover_stroke = Instance.new("UIStroke")
+	hover_stroke.Thickness = 2
+	hover_stroke.Color = Color3.fromRGB(255, 255, 255)
+	hover_stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	hover_stroke.Parent = hover
 
 	-- Hover effect
 	local defaultSize = button.Size
