@@ -26,7 +26,7 @@ function ToggleUI.Create(window)
 	button.Name = "ToggleButton"
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(0.975, 0, 0.5, 0)
-	button.Size = UDim2.new(0.031, 0, 0.056, 0)
+	button.Size = UDim2.fromOffset(60, 60) -- ukuran fix supaya gak berubah
 	button.BackgroundColor3 = Color3.fromRGB(255, 115, 230)
 	button.Image = "rbxassetid://112969347193102"
 	button.BorderSizePixel = 0
@@ -37,9 +37,10 @@ function ToggleUI.Create(window)
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = button
 
-	local aspect = Instance.new("UIAspectRatioConstraint")
-	aspect.AspectRatio = 1
-	aspect.Parent = button
+	local sizeLock = Instance.new("UISizeConstraint")
+	sizeLock.MinSize = Vector2.new(60, 60)
+	sizeLock.MaxSize = Vector2.new(60, 60)
+	sizeLock.Parent = button
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 3
@@ -67,7 +68,7 @@ function ToggleUI.Create(window)
 	hoverStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 	hoverStroke.Parent = hover
 
-	-- Hover text only (tanpa tween)
+	-- Hover text only
 	button.MouseEnter:Connect(function()
 		hover.Visible = true
 	end)
@@ -76,7 +77,7 @@ function ToggleUI.Create(window)
 		hover.Visible = false
 	end)
 
-	-- Draggable system
+	-- Draggable
 	local dragging = false
 	local dragStart, startPos
 
@@ -109,7 +110,7 @@ function ToggleUI.Create(window)
 		window:Toggle()
 	end)
 
-	-- Hubungkan dengan event window
+	-- Event window
 	if window.OnOpen then
 		window:OnOpen(function()
 			gui.Enabled = false
