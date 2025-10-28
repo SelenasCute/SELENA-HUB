@@ -1,6 +1,6 @@
 --// File: ToggleUI.lua
 --[[===========================================
- Selena HUB UI Toggle Module
+ Selena HUB UI Toggle Module (Fixed Circle Version)
  @uniquadev - 2025
 =============================================]]
 
@@ -14,7 +14,7 @@ local ToggleUI = {}
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
-	--[[ UI ]]--
+	-- [[ ScreenGui ]]
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "SelenaHub_Toggle"
 	gui.ResetOnSpawn = false
@@ -22,25 +22,22 @@ function ToggleUI.Create(window)
 	gui.Enabled = false
 	gui.Parent = PlayerGui
 
+	-- [[ Button ]]
 	local button = Instance.new("ImageButton")
 	button.Name = "ToggleButton"
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(0.975, 0, 0.5, 0)
-	button.Size = UDim2.fromOffset(60, 60) -- ukuran fix supaya gak berubah
+	button.Size = UDim2.new(0, 60, 0, 60) -- Gunakan offset agar tidak auto-scale
 	button.BackgroundColor3 = Color3.fromRGB(255, 115, 230)
 	button.Image = "rbxassetid://112969347193102"
 	button.BorderSizePixel = 0
 	button.AutoButtonColor = true
 	button.Parent = gui
 
+	-- Pastikan benar-benar bulat
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = button
-
-	local sizeLock = Instance.new("UISizeConstraint")
-	sizeLock.MinSize = Vector2.new(60, 60)
-	sizeLock.MaxSize = Vector2.new(60, 60)
-	sizeLock.Parent = button
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 3
@@ -48,6 +45,12 @@ function ToggleUI.Create(window)
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = button
 
+	-- Gunakan rasio 1:1 agar bentuk selalu bulat, tidak berubah
+	local ratio = Instance.new("UIAspectRatioConstraint")
+	ratio.AspectRatio = 1
+	ratio.Parent = button
+
+	-- [[ Hover Label ]]
 	local hover = Instance.new("TextLabel")
 	hover.Name = "Hover"
 	hover.AnchorPoint = Vector2.new(0, 0.5)
@@ -68,7 +71,7 @@ function ToggleUI.Create(window)
 	hoverStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 	hoverStroke.Parent = hover
 
-	-- Hover text only
+	-- [[ Hover Only ]]
 	button.MouseEnter:Connect(function()
 		hover.Visible = true
 	end)
@@ -77,7 +80,7 @@ function ToggleUI.Create(window)
 		hover.Visible = false
 	end)
 
-	-- Draggable
+	-- [[ Draggable Stable ]]
 	local dragging = false
 	local dragStart, startPos
 
@@ -105,12 +108,12 @@ function ToggleUI.Create(window)
 		end
 	end)
 
-	-- Klik toggle UI
+	-- [[ Klik toggle UI ]]
 	button.MouseButton1Click:Connect(function()
 		window:Toggle()
 	end)
 
-	-- Event window
+	-- [[ Event window ]]
 	if window.OnOpen then
 		window:OnOpen(function()
 			gui.Enabled = false
