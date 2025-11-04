@@ -129,39 +129,94 @@ local function ToggleNoClip(state)
 	NoClipEnabled = state
 end
 
--- ✅ WALK ON WATER (BUAT PLATFORM DI BAWAH KAKI)
-local WaterPart
-RunService.Heartbeat:Connect(function()
-	if WalkOnWaterEnabled then
-		local HRP = Character:FindFirstChild("HumanoidRootPart")
-		if not HRP then return end
+--// Walk On Water System
+-- Author: xeAtheo
+-- Auto-creates transparent platforms over water near player (radius 50)
 
-		local ray = Ray.new(HRP.Position, Vector3.new(0, -5, 0))
-		local part, pos = workspace:FindPartOnRay(ray, Character)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Terrain = workspace.Terrain
+local Player = Players.LocalPlayer
 
-		if part and part.Material == Enum.Material.Water then
-			if not WaterPart then
-				WaterPart = Instance.new("Part")
-				WaterPart.Anchored = true
-				WaterPart.Size = Vector3.new(6, 1, 6)
-				WaterPart.Transparency = 1
-				WaterPart.CanCollide = true
-				WaterPart.Parent = workspace
+local WalkOnWaterEnabled = false
+local Radius = 50
+local PlatformFolder = workspace:FindFirstChild("WaterPlatforms") or Instance.new("Folder", workspace)
+PlatformFolder.Name = "WaterPlatforms"
+
+-- Fungsi buat spawn platform di posisi tertentu
+local function CreateWaterPlatform(posY, posX, posZ)
+	local part = Instance.new("Part")
+	part.Anchored = true
+	part.CanCollide = true
+	part.Material = Enum.Material.SmoothPlastic
+	part.Color = Color3.fromRGB(135, 206, 235)
+	part.Transparency = 0.6
+	part.Size = Vector3.new(6, 0.3, 6)
+	part.CFrame = CFrame.new(posX, posY, posZ)
+	part.Parent = PlatformFolder
+	game.Debris:AddItem(part, 1)
+end
+
+-- Loop utama: cek area sekitar player
+local function WalkOnWaterLoop()
+	while WalkOnWaterEnabled do
+		task.wait(1)
+
+		local character = Player.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		if not hrp then continue end
+
+		local center = hrp.Position
+		local step = 6 -- jarak antar scan grid
+		for x = -Radius, Radius, step do
+			for z = -Radius, Radius, step do
+				local checkPos = Vector3.new(center.X + x, center.Y - 5, center.Z + z)
+				local voxelRegion = Region3.new(checkPos - Vector3.new(2, 4, 2), checkPos + Vector3.new(2, 0, 2))
+				local materials = Terrain:ReadVoxels(voxelRegion, 4)
+				local hasWater = false
+
+				for i = 1, materials.Size.X do
+					for j = 1, materials.Size.Y do
+						for k = 1, materials.Size.Z do
+							if materials[i][j][k] == Enum.Material.Water then
+								hasWater = true
+								break
+							end
+						end
+					end
+				end
+
+				if hasWater then
+					CreateWaterPlatform(checkPos.Y + 6, checkPos.X, checkPos.Z)
+				end
 			end
-			WaterPart.Position = Vector3.new(HRP.Position.X, pos.Y + 1, HRP.Position.Z)
-		elseif WaterPart then
-			WaterPart:Destroy()
-			WaterPart = nil
 		end
-	elseif WaterPart then
-		WaterPart:Destroy()
-		WaterPart = nil
 	end
-end)
+end
 
+-- ✅ Fungsi Toggle
 local function ToggleWalkOnWater(state)
 	WalkOnWaterEnabled = state
+
+	local character = Player.Character or Player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+
+	if state then
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+		task.spawn(WalkOnWaterLoop)
+	else
+		humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+		for _, v in ipairs(PlatformFolder:GetChildren()) do
+			if v:IsA("BasePart") then v:Destroy() end
+		end
+	end
 end
+
+-- Return biar bisa dipanggil dari WindUI
+return {
+	ToggleWalkOnWater = ToggleWalkOnWater
+}
+
 
 -- ✅ RETURN MODULE
 return {
