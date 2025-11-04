@@ -8,7 +8,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Terrain = workspace.Terrain
 
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -17,13 +16,10 @@ local Humanoid = Character:WaitForChild("Humanoid")
 -- STATE
 local InfiniteJumpEnabled = false
 local NoClipEnabled = false
-local WalkOnWaterEnabled = false
 local FlyEnabled = false
 local FlySpeed = 50
 
 local FlyBodyGyro, FlyBodyVelocity
-local PlatformFolder = workspace:FindFirstChild("WaterPlatforms") or Instance.new("Folder", workspace)
-PlatformFolder.Name = "WaterPlatforms"
 
 -- ✅ WALK SPEED
 local function SetWalkSpeed(value)
@@ -119,56 +115,6 @@ local function ToggleNoClip(state)
 	NoClipEnabled = state
 end
 
--- ✅ WALK ON WATER
-local Radius = 50
-
-local function CreateWaterPlatform(pos)
-	local part = Instance.new("Part")
-	part.Anchored = true
-	part.CanCollide = true
-	part.Material = Enum.Material.SmoothPlastic
-	part.Color = Color3.fromRGB(135, 206, 235)
-	part.Transparency = 0.7
-	part.Size = Vector3.new(6, 0.3, 6)
-	part.CFrame = CFrame.new(pos.X, pos.Y + 0.2, pos.Z)
-	part.Parent = PlatformFolder
-	game.Debris:AddItem(part, 2)
-end
-
-local function WalkOnWaterLoop()
-	while WalkOnWaterEnabled do
-		task.wait(1)
-		local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-		if not hrp then continue end
-
-		local center = hrp.Position
-		for x = -Radius, Radius, 8 do
-			for z = -Radius, Radius, 8 do
-				local checkPos = Vector3.new(center.X + x, center.Y - 3, center.Z + z)
-				local material = Terrain:ReadVoxels(Region3.new(checkPos - Vector3.new(2, 2, 2), checkPos + Vector3.new(2, 0, 2)), 4)
-				if material[1][1][1] == Enum.Material.Water then
-					CreateWaterPlatform(checkPos)
-				end
-			end
-		end
-	end
-end
-
-local function ToggleWalkOnWater(state)
-	WalkOnWaterEnabled = state
-	local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
-
-	if state then
-		if humanoid then humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false) end
-		task.spawn(WalkOnWaterLoop)
-	else
-		if humanoid then humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true) end
-		for _, p in ipairs(PlatformFolder:GetChildren()) do
-			if p:IsA("BasePart") then p:Destroy() end
-		end
-	end
-end
-
 -- ✅ RETURN MODULE
 return {
 	SetWalkSpeed = SetWalkSpeed,
@@ -178,5 +124,4 @@ return {
 	OpenFlyGuiMobile = OpenFlyGuiMobile,
 	ToggleInfiniteJump = ToggleInfiniteJump,
 	ToggleNoClip = ToggleNoClip,
-	ToggleWalkOnWater = ToggleWalkOnWater,
 }
