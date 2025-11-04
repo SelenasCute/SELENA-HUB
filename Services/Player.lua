@@ -87,6 +87,8 @@ local function OpenFlyGuiMobile()
 		Text = "Mobile fly control coming soon.",
 		Duration = 3
 	})
+	
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
 end
 
 -- ✅ INFINITE JUMP
