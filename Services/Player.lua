@@ -8,6 +8,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Terrain = workspace.Terrain
 
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -19,13 +20,14 @@ local NoClipEnabled = false
 local WalkOnWaterEnabled = false
 local FlyEnabled = false
 local FlySpeed = 50
+
 local FlyBodyGyro, FlyBodyVelocity
+local PlatformFolder = workspace:FindFirstChild("WaterPlatforms") or Instance.new("Folder", workspace)
+PlatformFolder.Name = "WaterPlatforms"
 
 -- ✅ WALK SPEED
 local function SetWalkSpeed(value)
-	if Humanoid then
-		Humanoid.WalkSpeed = value
-	end
+	if Humanoid then Humanoid.WalkSpeed = value end
 end
 
 -- ✅ JUMP POWER
@@ -48,7 +50,6 @@ local function ToggleFly(state)
 
 	if state then
 		Humanoid.PlatformStand = true
-
 		FlyBodyGyro = Instance.new("BodyGyro")
 		FlyBodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
 		FlyBodyGyro.P = 9e4
@@ -61,28 +62,17 @@ local function ToggleFly(state)
 		FlyBodyVelocity.Parent = HRP
 
 		RunService.RenderStepped:Connect(function()
-			if not FlyEnabled or not HRP or not Character or not Character.Parent then return end
+			if not FlyEnabled or not HRP then return end
 
 			local camCF = workspace.CurrentCamera.CFrame
 			local moveDir = Vector3.zero
-			if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-				moveDir += camCF.LookVector
-			end
-			if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-				moveDir -= camCF.LookVector
-			end
-			if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-				moveDir -= camCF.RightVector
-			end
-			if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-				moveDir += camCF.RightVector
-			end
-			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-				moveDir += Vector3.new(0, 1, 0)
-			end
-			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-				moveDir -= Vector3.new(0, 1, 0)
-			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += camCF.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= camCF.LookVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= camCF.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += camCF.RightVector end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
 
 			FlyBodyGyro.CFrame = camCF
 			FlyBodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * FlySpeed or Vector3.zero
@@ -119,7 +109,7 @@ RunService.Stepped:Connect(function()
 	if NoClipEnabled and Character then
 		for _, part in pairs(Character:GetChildren()) do
 			if part:IsA("BasePart") then
-				part.CanCollide = false
+				part.CanCollide = not NoClipEnabled
 			end
 		end
 	end
@@ -129,94 +119,55 @@ local function ToggleNoClip(state)
 	NoClipEnabled = state
 end
 
---// Walk On Water System
--- Author: xeAtheo
--- Auto-creates transparent platforms over water near player (radius 50)
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Terrain = workspace.Terrain
-local Player = Players.LocalPlayer
-
-local WalkOnWaterEnabled = false
+-- ✅ WALK ON WATER
 local Radius = 50
-local PlatformFolder = workspace:FindFirstChild("WaterPlatforms") or Instance.new("Folder", workspace)
-PlatformFolder.Name = "WaterPlatforms"
 
--- Fungsi buat spawn platform di posisi tertentu
-local function CreateWaterPlatform(posY, posX, posZ)
+local function CreateWaterPlatform(pos)
 	local part = Instance.new("Part")
 	part.Anchored = true
 	part.CanCollide = true
 	part.Material = Enum.Material.SmoothPlastic
 	part.Color = Color3.fromRGB(135, 206, 235)
-	part.Transparency = 0.6
+	part.Transparency = 0.7
 	part.Size = Vector3.new(6, 0.3, 6)
-	part.CFrame = CFrame.new(posX, posY, posZ)
+	part.CFrame = CFrame.new(pos.X, pos.Y + 0.2, pos.Z)
 	part.Parent = PlatformFolder
-	game.Debris:AddItem(part, 1)
+	game.Debris:AddItem(part, 2)
 end
 
--- Loop utama: cek area sekitar player
 local function WalkOnWaterLoop()
 	while WalkOnWaterEnabled do
 		task.wait(1)
-
-		local character = Player.Character
-		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then continue end
 
 		local center = hrp.Position
-		local step = 6 -- jarak antar scan grid
-		for x = -Radius, Radius, step do
-			for z = -Radius, Radius, step do
-				local checkPos = Vector3.new(center.X + x, center.Y - 5, center.Z + z)
-				local voxelRegion = Region3.new(checkPos - Vector3.new(2, 4, 2), checkPos + Vector3.new(2, 0, 2))
-				local materials = Terrain:ReadVoxels(voxelRegion, 4)
-				local hasWater = false
-
-				for i = 1, materials.Size.X do
-					for j = 1, materials.Size.Y do
-						for k = 1, materials.Size.Z do
-							if materials[i][j][k] == Enum.Material.Water then
-								hasWater = true
-								break
-							end
-						end
-					end
-				end
-
-				if hasWater then
-					CreateWaterPlatform(checkPos.Y + 6, checkPos.X, checkPos.Z)
+		for x = -Radius, Radius, 8 do
+			for z = -Radius, Radius, 8 do
+				local checkPos = Vector3.new(center.X + x, center.Y - 3, center.Z + z)
+				local material = Terrain:ReadVoxels(Region3.new(checkPos - Vector3.new(2, 2, 2), checkPos + Vector3.new(2, 0, 2)), 4)
+				if material[1][1][1] == Enum.Material.Water then
+					CreateWaterPlatform(checkPos)
 				end
 			end
 		end
 	end
 end
 
--- ✅ Fungsi Toggle
 local function ToggleWalkOnWater(state)
 	WalkOnWaterEnabled = state
-
-	local character = Player.Character or Player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
+	local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
 
 	if state then
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+		if humanoid then humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false) end
 		task.spawn(WalkOnWaterLoop)
 	else
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
-		for _, v in ipairs(PlatformFolder:GetChildren()) do
-			if v:IsA("BasePart") then v:Destroy() end
+		if humanoid then humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true) end
+		for _, p in ipairs(PlatformFolder:GetChildren()) do
+			if p:IsA("BasePart") then p:Destroy() end
 		end
 	end
 end
-
--- Return biar bisa dipanggil dari WindUI
-return {
-	ToggleWalkOnWater = ToggleWalkOnWater
-}
-
 
 -- ✅ RETURN MODULE
 return {
