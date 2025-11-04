@@ -85,4 +85,31 @@ function LocationModule.TeleportTo(typeName, locationName)
     end
 end
 
+function GetAllPlayerNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= Player then table.insert(names, plr.Name) end
+    end
+    return names
+end
+
+function RefreshPlayersDropdown(dropdown)
+    local newList = GetAllPlayerNames()
+    dropdown:SetValues(newList)
+    WindUI:Notify({Title = "Refresh player list", Content = "Successfully Refreshed player list", Icon = "users", Duration = 3})
+end
+
+function TeleportToPlayerByName(name)
+    if not name then warn("No player selected!") return end
+    local target = Players:FindFirstChild(name)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = target.Character.HumanoidRootPart
+        local pchar = Player.Character
+        if pchar and pchar:FindFirstChild("HumanoidRootPart") then
+            pchar.HumanoidRootPart.CFrame = hrp.CFrame + Vector3.new(0,5,0)
+            WindUI:Notify({Title = "Teleport to "..target.Name, Content = "Successfully Teleported to selected player", Icon = "users", Duration = 3})
+        end
+    end
+end
+
 return LocationModule
