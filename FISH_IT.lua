@@ -483,7 +483,7 @@ end
 
 local aboutParagraph = AboutTab:Paragraph({
     Title = "Hello, " .. Player.Name .. " 👋",
-    Desc = (<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s):format(getLevel(), stat("Caught"), stat("Rarest Fish")),
+    Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s>'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
     Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420),
     ImageSize = 70
 })
@@ -492,7 +492,8 @@ for _, name in ipairs({"Caught", "Rarest Fish"}) do
     local s = leaderstats:FindFirstChild(name)
     if s then
         s:GetPropertyChangedSignal("Value"):Connect(function()
-            aboutParagraph:SetDesc((<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s):format(getLevel(), stat("Caught"), stat("Rarest Fish")))
+        aboutParagraph:SetDesc(('<font color="#ffcc00">Level:</font> %s<br/>' ..'<font color="#ffcc00">Caught:</font> %s<br/>' ..'<font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish")))
+
         end)
     end
 end
@@ -1175,33 +1176,3 @@ SaveManagerSection:Button({
 -- DANGER / SERVER HOPPING
 local Endgame = SettingsTab:Section({Title = "Server Hopping", Opened = true})
 Endgame:Button({Title = "Rejoin Server", Icon = "refresh-cw", Callback = RejoinServer})
-
-
-Window:OnClose(function()
-    -- Reset semua config ke default
-    for k, v in pairs(DefaultConfig) do
-        Config[k] = v
-    end
-    
-    -- Matikan semua fitur
-    pcall(function() Modules.Player.SetWalkSpeed(16) end)
-    pcall(function() Modules.Player.SetJumpPower(50) end)
-    pcall(function() Modules.Player.ToggleInfiniteJump(false) end)
-    pcall(function() Modules.Player.ToggleNoClip(false) end)
-    pcall(function() Modules.Player.ToggleFly(false) end)
-    pcall(function() Modules.Player.ToggleWalkOnWater(false) end)
-    pcall(function() ToggleFPSBoost(false) end)
-    pcall(function() ToggleLowGraphics(false) end)
-    pcall(function() Toggle3DRenderingDisable(false) end)
-    pcall(function() ToggleAntiAFK(false) end)
-    
-    -- Unequip gear
-    pcall(function()
-        Events.unequip:FireServer(1)
-        Events.unequipOxygen:InvokeServer()
-        Events.updateFishingRadar:InvokeServer(false)
-    end)
-    
-    Notify("Selena HUB", "Closing Selena HUB | Rejoining server...", "power")
-    task.wait(0.5)
-end)
