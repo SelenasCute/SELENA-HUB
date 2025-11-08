@@ -95,8 +95,7 @@ end
 
 -- // Daftar Game Support
 local SupportedGames = {
-    [121864768012064] = "https://raw.githubusercontent.com/Vinzyy13/VinzHub/refs/heads/main/Fish-It",
-    [109983668079237] = "https://raw.githubusercontent.com/Vinzyy13/VinzHub/refs/heads/main/Restaurant-Tycoon-2",
+    [121864768012064] = "https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/FISH_IT.lua",
 }
 
 -- // Loader Logic
@@ -128,3 +127,4 @@ else
     warn("⚠️ Selena HUB | Game Not Supported:", PlaceId)
     BuatNotifikasi("Selena HUB", "This Game is Not Supported")
 end
+
