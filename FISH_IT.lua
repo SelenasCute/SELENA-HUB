@@ -76,9 +76,6 @@ local DefaultConfig = {
     FishingRadar = false,
     DivingGear = false,
 
-    SavedSpot = nil,
-    AutoFishSpot = false,
-    
     -- Player Settings
     WalkSpeed = 16,
     JumpPower = 50,
@@ -430,14 +427,6 @@ task.spawn(function()
         if Config.AutoFish then
             VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
             VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(1) do
-        if Config.AlreadyInIsland == false and Config.AutoTeleportToIsland == true then
-            AutoIslandTeleport(true)
         end
     end
 end)
@@ -988,44 +977,7 @@ MerchantSection:Toggle({
 --                         TELEPORT TAB
 -- ====================================================================
 local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
-
--- AUTO TELEPORT TO SPOT
-local SpotSection = TeleportTab:Section({Title = "Auto Teleport to Fishing Spot", Opened = true})
-SpotSection:Button({Title = "Set Fishing Spot", 
-    Callback = function()
-        Config.SavedSpot = Character.HumanoidRootPart.CFrame
-        Notify("Auto Teleport", "Auto Teleport to Island Enabled", "map-pin")
-    end
-})
-SpotSection:Space()
-
-SpotSection:Toggle({
-    Flag = "AutoTeleportToSpot",
-    Title = "Auto Teleport Spot",
-    Desc = "Automatically teleport to spot while enable, delay 1 second",
-    Default = Config.AutoFishSpot,
-    Callback = function(state)
-        if Config.SavedSpot == nil then
-            Notify("Error", "You must set a fishing spot first by clicking the button above!", "x")
-            return
-        end
-        Character.HumanoidRootPart.CFrame = Config.SavedSpot
-        Config.AutoFishSpot = state
-    end
-})
-
 -- ISLAND TELEPORT
-local IslandSection = TeleportTab:Section({Title = "Island Teleport", Opened = true})
-IslandSection:Dropdown({
-    Flag = "SelectedIslandDropdown",
-    Title = "Select Island Teleport",
-    Values = islandNames,
-    Value = islandNames[1],
-    Callback = function(opt)
-        Config.SelectedIsland = opt
-    end
-})
-IslandSection:Space()
 IslandSection:Button({
     Title = "Teleport",
     Callback = function()
