@@ -75,7 +75,7 @@ local DefaultConfig = {
     AutoSellDelay = 30,
     FishingRadar = false,
     DivingGear = false,
-
+    
     -- Player Settings
     WalkSpeed = 16,
     JumpPower = 50,
@@ -977,7 +977,19 @@ MerchantSection:Toggle({
 --                         TELEPORT TAB
 -- ====================================================================
 local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
+
 -- ISLAND TELEPORT
+local IslandSection = TeleportTab:Section({Title = "Island Teleport", Opened = true})
+IslandSection:Dropdown({
+    Flag = "SelectedIslandDropdown",
+    Title = "Select Island Teleport",
+    Values = islandNames,
+    Value = islandNames[1],
+    Callback = function(opt)
+        Config.SelectedIsland = opt
+    end
+})
+IslandSection:Space()
 IslandSection:Button({
     Title = "Teleport",
     Callback = function()
@@ -1045,7 +1057,7 @@ local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({
     Flag = "SelectedPlayerDropdown",
     Title = "Select Player",
     Values = GetAllPlayerNames(),
-    Value = GetAllPlayerNames()[1] or "None",
+    Value = "None",
     Callback = function(option)
         Config.SelectedPlayer = option
     end
@@ -1293,11 +1305,3 @@ ConfigTab:Button({
         Notify("Refreshed", "Config list refreshed successfully!", "refresh-cw")
     end
 })
-
-Window:OnDestroy(function()
-    RejoinServer()
-end)
--- ====================================================================
---                         INITIALIZATION COMPLETE
--- ====================================================================
-Notify("Selena HUB", "Script loaded successfully! v" .. VERSION, "check", 5)
