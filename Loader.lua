@@ -7,7 +7,6 @@
 local selenaLogo = "rbxassetid://112969347193102" -- Ganti ID logo jika ada logo Selena HUB sendiri
 print("Selena HUB Universal Loader")
 
-
 local function BuatNotifikasi(title, message)
     local CoreGui = game:GetService("CoreGui")
     if CoreGui:FindFirstChild("SelenaNotifGui") then
