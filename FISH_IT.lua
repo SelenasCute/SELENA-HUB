@@ -1,11 +1,12 @@
 -- ====================================================================
 --                      Selena HUB | Fish it
---                      Last Update 11/4/2025
+--                      Last Update 11/8/2025
+--                      Enhanced Config Manager
 -- ====================================================================
 
 local GAME = "Selena HUB | Fish It"
-local VERSION = 1.1
-local LATEST_UPDATE = "11/6/2025"
+local VERSION = 1.2
+local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
 
 -- ====== CRITICAL DEPENDENCY VALIDATION ======
@@ -53,6 +54,7 @@ local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local RootPart = Character:WaitForChild("HumanoidRootPart")
 local leaderstats = Player:FindFirstChild("leaderstats")
+
 -- ====================================================================
 --                        MODULES
 -- ====================================================================
@@ -60,18 +62,24 @@ local Modules = {
     Player = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Player.lua"))(),
     Location = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Fish%20It/Location.lua"))()
 }
--- ====================================================================
---                        CONFIGURATION
--- ====================================================================
 
+-- ====================================================================
+--                        CONFIGURATION WITH FLAGS
+-- ====================================================================
 local DefaultConfig = {
-    AutoSell = false,
+    -- Main Features
     AutoFish = false,
     AutoFishV2 = false,
     AutoFishV2Delay = 2,
+    AutoSell = false,
     AutoSellDelay = 30,
     FishingRadar = false,
     DivingGear = false,
+
+    SavedSpot = nil,
+    AutoFishSpot = false,
+    
+    -- Player Settings
     WalkSpeed = 16,
     JumpPower = 50,
     InfiniteJump = false,
@@ -79,19 +87,45 @@ local DefaultConfig = {
     WalkOnWater = false,
     Fly = false,
     FlySpeed = 50,
+    
+    -- Graphics Settings
     FPSBoost = false,
     LowGraphics = false,
     Disable3DRendering = false,
     AntiAFK = false,
-    MerchantOpen = false
+    
+    -- Shop Settings
+    SelectedRod = nil,
+    SelectedBait = nil,
+    SelectedWeather = nil,
+    SelectedBoat = nil,
+    MerchantOpen = false,
+    
+    -- Teleport Settings
+    SelectedIsland = nil,
+    SelectedEvent = nil,
+    SelectedNPC = nil,
+    SelectedPlayer = nil,
+    SavedPositions = {},
+    
+    -- UI Settings
+    UIToggleKey = "RightShift"
 }
 
 local Config = {}
 for k, v in pairs(DefaultConfig) do Config[k] = v end
 
 -- ====================================================================
---                     MAIN FUNCTION
+--                     UTILITY FUNCTIONS
 -- ====================================================================
+
+function Cleanup()
+    for k, v in pairs(DefaultConfig) do
+        Config[k] = typeof(v) == "table" and table.clone(v) or v
+    end
+    print("[Cleanup] Config reset to default values.")
+end
+
 
 local function parsePrice(text)
     local num, suffix = string.match(text, "%(([%d%.]+)([KkMm]?)%$")
@@ -105,7 +139,8 @@ local function parsePrice(text)
     return num
 end
 
-local function Notify(title: string, content: string, icon: string, duration: number)
+local function Notify(title, content, icon, duration)
+    duration = duration or 3
     icon = icon or "info"
     return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
 end
@@ -134,7 +169,11 @@ end
 
 local Events = getNetworkEvents()
 
---===== TELEPORT =====--
+-- ====================================================================
+--                        GAME FUNCTIONS
+-- ====================================================================
+
+-- Teleport Functions
 local function GetAllPlayerNames()
     local names = {}
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -146,7 +185,6 @@ end
 local function RefreshPlayersDropdown(dropdown)
     local newList = GetAllPlayerNames()
     dropdown:SetValues(newList)
-    WindUI:Notify({Title = "Refresh player list", Content = "Successfully Refreshed player list", Icon = "users", Duration = 3})
     Notify("Refresh player list", "Successfully Refreshed player list", "refresh-ccw")
 end
 
@@ -158,40 +196,31 @@ local function TeleportToPlayerByName(name)
         local pchar = Player.Character
         if pchar and pchar:FindFirstChild("HumanoidRootPart") then
             pchar.HumanoidRootPart.CFrame = hrp.CFrame + Vector3.new(0,5,0)
-            WindUI:Notify({Title = "Teleport to "..target.Name, Content = "Successfully Teleported to selected player", Icon = "users", Duration = 3})
+            Notify("Teleport to "..target.Name, "Successfully Teleported to selected player", "users")
         end
     end
 end
 
+-- Location Lists
 local islandNames = {}
 for name in pairs(Modules.Location.LOCATIONS["Island"]) do
-table.insert(islandNames, name)
+    table.insert(islandNames, name)
 end
 table.sort(islandNames)
-local selectedIsland = islandNames[1]
 
 local eventNames = {}
 for name in pairs(Modules.Location.LOCATIONS["GameEvent"]) do
     table.insert(eventNames, name)
 end
 table.sort(eventNames)
-local selectedEvent = eventNames[1]
 
 local npcNames = {}
 for name in pairs(Modules.Location.LOCATIONS["NPC"]) do
     table.insert(npcNames, name)
 end
 table.sort(npcNames)
-local selectedNPC = npcNames[1]
 
---===== NOTIFY =====--
-local function Notify(title: string, content: string, icon: string, duration: number)
-    duration = duration or 3
-    icon = icon or "rbxassetid://76311199408449"
-    return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
-end
-
---===== MISC =====--
+-- Misc Functions
 local function safeInvokeSpecialDialogue(npcName)
     pcall(function()
         local index = ReplicatedStorage:FindFirstChild("Packages")
@@ -208,11 +237,10 @@ local function AutoTrickOrTreat()
             safeInvokeSpecialDialogue(npc.Name)
         end
     end
-    WindUI:Notify({Title = "Auto Trick or Treat", Content = "Auto Trick or Treat successfully completed", Icon = "check", Duration = 3})
+    Notify("Auto Trick or Treat", "Auto Trick or Treat successfully completed", "check")
 end
 
 local function RequestGear(name, state)
-
     if name == "Oxygen" then
         if state then
             Events.equipOxygen:InvokeServer(105)
@@ -222,36 +250,29 @@ local function RequestGear(name, state)
     elseif name == "Radar" then
         Events.updateFishingRadar:InvokeServer(state)
     end
-
 end
 
 local function RedeemCode()
     local codes = { "CRYSTALS", "BLAMETALON", "SORRY" }
-
     for _, code in ipairs(codes) do
         Events.redeemCode:InvokeServer(code)
         task.wait(0.5)
-        Notify("Redeem Code", "Successfully Redeem Code "..code, "")
+        Notify("Redeem Code", "Successfully Redeem Code "..code, "ticket")
     end
 end
 
 local function simpleSell()
-    print("╔═══════════════════════════════════╗")
-    print("[Auto Sell] 💰 Selling all non-favorited items...")
-    
     local sellSuccess = pcall(function()
         return Events.sell:InvokeServer()
     end)
-    
     if sellSuccess then
-        print("[Auto Sell] ✅ SOLD! (Favorited fish kept safe)")
-        print("╚═══════════════════════════════════╝")
+        Notify("Auto Sell", "Successfully sold all items in inventory.", "dollar-sign")
     else
-        warn("[Auto Sell] circle-x Sell failed")
-        print("╚═══════════════════════════════════╝")
+        Notify("Auto Sell", "Failed to sell items. Please try again.", "x")
     end
 end
 
+-- Auto Sell Loop
 task.spawn(function()
     while true do
         task.wait(Config.AutoSellDelay)
@@ -261,21 +282,13 @@ task.spawn(function()
     end
 end)
 
-local function DestroyUI()
-	if Window and type(Window.Destroy) == "function" then
-		Window:Destroy()
-		Notify("UI Closed", "Successfully destroyed WindUI interface.", "shield-off")
-	else
-		Notify("Error", "UI window not found or already closed.", "xmark")
-	end
-end
-
 local function RejoinServer()
-	Notify("Rejoining", "Rejoining current server...", "refresh-cw")
-	task.wait(0.5)
-	game:GetService("TeleportService"):Teleport(game.PlaceId)
+    Notify("Rejoining", "Rejoining current server...", "refresh-cw")
+    task.wait(0.5)
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
 end
 
+-- Graphics Functions
 local function ToggleFPSBoost(state)
     Config.FPSBoost = state
     local Terrain = workspace:FindFirstChildOfClass("Terrain")
@@ -310,22 +323,22 @@ end
 
 local AntiAFKConnection
 local function ToggleAntiAFK(state)
-	Config.AntiAFK = state
-	local vu = game:GetService("VirtualUser")
-	local player = game.Players.LocalPlayer
+    Config.AntiAFK = state
+    local vu = game:GetService("VirtualUser")
+    local player = game.Players.LocalPlayer
 
-	if state then
-		AntiAFKConnection = player.Idled:Connect(function()
-			vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-			task.wait(1)
-			vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-		end)
-	else
-		if AntiAFKConnection then
-			AntiAFKConnection:Disconnect()
-			AntiAFKConnection = nil
-		end
-	end
+    if state then
+        AntiAFKConnection = player.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        end)
+    else
+        if AntiAFKConnection then
+            AntiAFKConnection:Disconnect()
+            AntiAFKConnection = nil
+        end
+    end
 end
 
 local function ToggleLowGraphics(state)
@@ -358,7 +371,6 @@ local function Toggle3DRenderingDisable(state)
             gui.DisplayOrder = -99999
             gui.Parent = Player:WaitForChild("PlayerGui")
 
-            -- FRAME
             blackFrame = Instance.new("Frame")
             blackFrame.Size = UDim2.new(1, 0, 1, 0)
             blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -367,7 +379,6 @@ local function Toggle3DRenderingDisable(state)
             blackFrame.ZIndex = 0
             blackFrame.Parent = gui
 
-            -- TEXT
             local v1 = Instance.new("TextLabel")
             v1.Size = UDim2.new(0.7, 0, 0.7, 0)
             v1.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -376,10 +387,9 @@ local function Toggle3DRenderingDisable(state)
             v1.Text = "SELENA HUB"
             v1.TextColor3 = Color3.fromRGB(255, 255, 255)
             v1.TextScaled = true
-            v1.Font = Enum.Font.GothamBold -- font tebal & modern
+            v1.Font = Enum.Font.GothamBold
             v1.ZIndex = 1
             v1.Parent = blackFrame
-
         else
             blackFrame.Visible = true
         end
@@ -390,11 +400,31 @@ local function Toggle3DRenderingDisable(state)
 end
 
 local function SetToggleKey(key)
-	Window:SetToggleKey(Enum.KeyCode[key])
-	Notify("UI Toggle", "UI toggle key set to " .. key, "keyboard")
+    Config.UIToggleKey = key
+    Window:SetToggleKey(Enum.KeyCode[key])
+    Notify("UI Toggle", "UI toggle key set to " .. key, "keyboard")
 end
 
---===== TASK =====--
+local function OpenMerchant(state)
+    Config.MerchantOpen = state
+    pcall(function()
+        game:GetService("Players").LocalPlayer.PlayerGui.Merchant.Enabled = state
+    end)
+end
+
+local function AutoIslandTeleport(state)
+    if Config.AlreadyInIsland == true then return end
+    if state then
+        Config.AlreadyInIsland = true
+        Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+    else 
+        Config.AlreadyInIsland = false
+    end
+end
+
+-- ====================================================================
+--                        AUTO FISH TASKS
+-- ====================================================================
 task.spawn(function()
     while task.wait(0.15) do
         if Config.AutoFish then
@@ -403,36 +433,47 @@ task.spawn(function()
         end
     end
 end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if Config.AlreadyInIsland == false and Config.AutoTeleportToIsland == true then
+            AutoIslandTeleport(true)
+        end
+    end
+end)
+
 task.spawn(function()
     while task.wait() do
         if Config.AutoFishV2 then
             pcall(function()
-                -- Step 1: Equip rod
                 Events.equip:FireServer(1)
                 task.wait(0.05)
-
-                -- Step 2: Cast
                 Events.charge:InvokeServer(1755848498.4834)
                 task.wait(0.02)
                 Events.minigame:InvokeServer(1.2854545116425, 1)
-
-                -- Step 3: Wait for bite (delay)
                 task.wait(Config.AutoFishV2Delay)
-
-                -- Step 4: Reel in
                 Events.fishing:FireServer()
-                print("[AutoFish V2] 🎣 Caught fish (Delay = " .. Config.AutoFishV2Delay .. "s)")
             end)
         end
     end
 end)
 
--- ====================================================================
---                         //NOTE MAIN UI
--- ====================================================================
+task.spawn(function()
+    while task.wait(1) do
+        if Config.AutoFishSpot and Config.SavedSpot then
+            local pchar = Player.Character
+            if pchar and pchar:FindFirstChild("HumanoidRootPart") then
+                pchar.HumanoidRootPart.CFrame = Config.SavedSpot
+            end
+        end
+    end
+end)
 
+-- ====================================================================
+--                         MAIN UI INITIALIZATION
+-- ====================================================================
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-local OpenButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Library/OpenButton.lua"))()
+
 local Window = WindUI:CreateWindow({
     Title = GAME,
     Icon = "rbxassetid://112969347193102",
@@ -451,39 +492,63 @@ local Window = WindUI:CreateWindow({
     BackgroundImageTransparency = 0.9,
 })
 
--- ====== OPEN BUTTON SYSTEM ======
-OpenButton.Create(Window)
+Window:EditOpenButton({
+    Title = "SELENA HUB",
+    Icon = "rbxassetid://112969347193102",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("000000"), 
+        Color3.fromHex("FFFFFF")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
 
--- ====== TAG SYSTEM ======
 Window:Tag({Title = "v" .. VERSION, Icon = "github", Color = Color3.fromHex("#6b31ff")})
 
--- ====== CONFIG MANAGER ======
+-- ====================================================================
+--                         CONFIG MANAGER SETUP
+-- ====================================================================
 local ConfigManager = Window.ConfigManager
 local ConfigName = "default"
 
--- ====================================================================
---                         //ANCHOR ABOUT TAB
--- ====================================================================
+-- Auto-load default config on startup
+task.spawn(function()
+    task.wait(1) -- Wait for UI to fully initialize
+    local AutoLoadConfig = ConfigManager:CreateConfig("default")
+    local success, err = pcall(function()
+        AutoLoadConfig:Load()
+    end)
+    
+    if success then
+        Notify("Auto Load", "Default configuration loaded successfully!", "check", 3)
+    end
+end)
 
+-- ====================================================================
+--                         ABOUT TAB
+-- ====================================================================
 local AboutTab = Window:Tab({Title = "About", Icon = "info"})
 AboutTab:Select()
 
 local function stat(name)
-	local s = leaderstats:FindFirstChild(name)
-	return s and s.Value or "N/A"
+    local s = leaderstats:FindFirstChild(name)
+    return s and s.Value or "N/A"
 end
 
 local function getLevel()
-	local ok, label = pcall(function()
-		return workspace.Characters[Player.Name].HumanoidRootPart.Overhead.LevelContainer.Label
-	end)
-	if not ok or not label or not label.Text then return 0 end
-	return tonumber(label.Text:match("%d+")) or 0
+    local ok, label = pcall(function()
+        return workspace.Characters[Player.Name].HumanoidRootPart.Overhead.LevelContainer.Label
+    end)
+    if not ok or not label or not label.Text then return 0 end
+    return tonumber(label.Text:match("%d+")) or 0
 end
 
 local aboutParagraph = AboutTab:Paragraph({
     Title = "Hello, " .. Player.Name .. " 👋",
-    Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s>'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
+    Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
     Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420),
     ImageSize = 70
 })
@@ -492,33 +557,34 @@ for _, name in ipairs({"Caught", "Rarest Fish"}) do
     local s = leaderstats:FindFirstChild(name)
     if s then
         s:GetPropertyChangedSignal("Value"):Connect(function()
-        aboutParagraph:SetDesc(('<font color="#ffcc00">Level:</font> %s<br/>' ..'<font color="#ffcc00">Caught:</font> %s<br/>' ..'<font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish")))
-
+            aboutParagraph:SetDesc(('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish")))
         end)
     end
 end
 
 AboutTab:Space()
 AboutTab:Button({
-	Title = "Copy Discord Link",
-	Icon = "link",
-	Callback = function()
-		setclipboard(DISCORD_LINK)
-		Notify("Discord Link", "Link copied to clipboard!", "rbxassetid://18505728201")
-	end
+    Title = "Copy Discord Link",
+    Icon = "link",
+    Callback = function()
+        setclipboard(DISCORD_LINK)
+        Notify("Discord Link", "Link copied to clipboard!", "link")
+    end
 })
 
-
-
 -- ====================================================================
---                         //ANCHOR MAIN TAB
--- ==================================================================== //tab2
+--                         MAIN TAB
+-- ====================================================================
 local MainTab = Window:Tab({Title = "Main", Icon = "house"})
 
--- AUTO FISH
+-- AUTO FISH SECTION
 local AutoFishSection = MainTab:Section({Title = "Auto Fish", Opened = true})
-AutoFishSection:Toggle({Flag = "AutoFishv1", Title = "Auto Fish V1", Desc = "Automatically farms fishing while enable", Default = Config.AutoFish,
-    Callback = function(state) 
+AutoFishSection:Toggle({
+    Flag = "AutoFishv1",
+    Title = "Auto Fish V1",
+    Desc = "Automatically farms fishing while enable",
+    Default = Config.AutoFish,
+    Callback = function(state)
         Config.AutoFish = state
         if state then
             Events.equip:FireServer(1)
@@ -526,102 +592,164 @@ AutoFishSection:Toggle({Flag = "AutoFishv1", Title = "Auto Fish V1", Desc = "Aut
     end
 })
 AutoFishSection:Space()
-AutoFishSection:Toggle({ Flag = "AutoFishv2", Title = "Auto Fish V2", Desc = "Better Auto Fish, Delay Suggestion:\nAstral: 2", Default = Config.AutoFishV2,
+AutoFishSection:Toggle({
+    Flag = "AutoFishv2",
+    Title = "Auto Fish V2",
+    Desc = "Better Auto Fish, Delay Suggestion:\nAstral: 2",
+    Default = Config.AutoFishV2,
     Callback = function(state)
         Config.AutoFishV2 = state
     end
 })
 AutoFishSection:Space()
-AutoFishSection:Input({ Title = "Auto Fish V2 Delay (seconds)", Placeholder = "Enter Delay (0.1 - 10)", Value = Config.AutoFishV2Delay,  InputIcon = "fish",
+AutoFishSection:Slider({
+    Flag = "AutoFishV2DelaySlider",
+    Title = "Auto Fish V2 Delay",
+    Step = 0.1,
+    Value = {
+        Min = 0.1,
+        Max = 10,
+        Default = Config.AutoFishV2Delay
+    },
     Callback = function(value)
-        local num = tonumber(value)
-        if num and num >= 0.1 and num <= 10 then
-            Config.AutoFishV2Delay = num
-        else
-            Notify("ERROR", "Delay amount must between 0.1 - 10")
-        end
+        Config.AutoFishV2Delay = value
     end
 })
 
--- AUTO SELL
+
+-- AUTO SELL SECTION
 local AutoSellSection = MainTab:Section({Title = "Auto Sell", Opened = true})
-AutoSellSection:Toggle({Flag = "AutoSellInventory", Title = "Auto Sell Inventory", Desc = "Automatically sell your inventory while enable", Default = Config.AutoSell,
-    Callback = function(state) 
+AutoSellSection:Toggle({
+    Flag = "AutoSellInventory",
+    Title = "Auto Sell Inventory",
+    Desc = "Automatically sell your inventory while enable",
+    Default = Config.AutoSell,
+    Callback = function(state)
         Config.AutoSell = state
     end
 })
 AutoSellSection:Space()
-AutoSellSection:Slider({Flag = "SellDelay", Title = "Sell Delay", Step = 1, Value = {Min = 1, Max = 200, Default = Config.AutoSellDelay}, 
-    Callback = function(value) 
+AutoSellSection:Slider({
+    Flag = "SellDelay",
+    Title = "Sell Delay",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 200,
+        Default = Config.AutoSellDelay
+    },
+    Callback = function(value)
         Config.AutoSellDelay = value
     end
 })
 AutoSellSection:Space()
-AutoSellSection:Button({Title = "Auto Sell Once", 
+AutoSellSection:Button({
+    Title = "Auto Sell Once",
     Callback = function()
         simpleSell()
     end
 })
 
--- EVENT
+-- EVENT SECTION
 local EventSection = MainTab:Section({Title = "Event", Opened = true})
-EventSection:Button({Flag = "TrickOrTreat", Title = "Auto Trick or Treat", Desc = "Automatically trick or treats", Callback = function() task.spawn(AutoTrickOrTreat) end})
+EventSection:Button({
+    Flag = "TrickOrTreat",
+    Title = "Auto Trick or Treat",
+    Desc = "Automatically trick or treats",
+    Callback = function()
+        task.spawn(AutoTrickOrTreat)
+    end
+})
 
--- MISC
+-- MISC SECTION
 local MiscSection = MainTab:Section({Title = "Misc", Opened = true})
-MiscSection:Toggle({Flag = "FishingRadar", Title = "Fishing Radar", Desc = "Turns te fishing radar ON or OFF", Default = Config.FishingRadar, 
-    Callback = function(state) 
+MiscSection:Toggle({
+    Flag = "FishingRadar",
+    Title = "Fishing Radar",
+    Desc = "Turns the fishing radar ON or OFF",
+    Default = Config.FishingRadar,
+    Callback = function(state)
         Config.FishingRadar = state
         RequestGear("Radar", state)
     end
 })
 MiscSection:Space()
-MiscSection:Toggle({Flag = "DivingGear", Title = "Diving Gear", Desc = "Equip or Unequips Diving Gear", Default = Config.DivingGear, 
-    Callback = function(state) 
+MiscSection:Toggle({
+    Flag = "DivingGear",
+    Title = "Diving Gear",
+    Desc = "Equip or Unequips Diving Gear",
+    Default = Config.DivingGear,
+    Callback = function(state)
         Config.DivingGear = state
         RequestGear("Oxygen", state)
     end
 })
 MiscSection:Space()
-MiscSection:Button({Title = "Redeem All Codes",
+MiscSection:Button({
+    Title = "Redeem All Codes",
     Callback = RedeemCode
 })
 
 -- ====================================================================
---                         //ANCHOR PLAYER TAB
--- ==================================================================== //tab4
+--                         PLAYER TAB
+-- ====================================================================
 local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
 
 local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
-MovementSection:Slider({Flag = "SpeedSlider", Title = "Walk Speed", Step = 1, Value = {Min = 16, Max = 200, Default = Config.WalkSpeed}, 
+MovementSection:Slider({
+    Flag = "SpeedSlider",
+    Title = "Walk Speed",
+    Step = 1,
+    Value = {
+        Min = 16,
+        Max = 200,
+        Default = Config.WalkSpeed
+    },
     Callback = function(value)
         Config.WalkSpeed = value
         Modules.Player.SetWalkSpeed(value)
     end
 })
 MovementSection:Space()
-MovementSection:Slider({Flag = "JumpSlider", Title = "Jump Power", Step = 1, Value = {Min = 50, Max = 300, Default = Config.JumpPower}, 
+MovementSection:Slider({
+    Flag = "JumpSlider",
+    Title = "Jump Power",
+    Step = 1,
+    Value = {
+        Min = 50,
+        Max = 300,
+        Default = Config.JumpPower
+    },
     Callback = function(value)
         Config.JumpPower = value
         Modules.Player.SetJumpPower(value)
     end
 })
 MovementSection:Space()
-MovementSection:Toggle({Flag = "InfiniteJumpToggle", Title = "Infinite Jump", Default = Config.InfiniteJump, 
+MovementSection:Toggle({
+    Flag = "InfiniteJumpToggle",
+    Title = "Infinite Jump",
+    Default = Config.InfiniteJump,
     Callback = function(state)
         Config.InfiniteJump = state
         Modules.Player.ToggleInfiniteJump(state)
     end
 })
 MovementSection:Space()
-MovementSection:Toggle({Flag = "NoClipToggle", Title = "NoClip", Default = Config.NoClip, 
+MovementSection:Toggle({
+    Flag = "NoClipToggle",
+    Title = "NoClip",
+    Default = Config.NoClip,
     Callback = function(state)
         Config.NoClip = state
         Modules.Player.ToggleNoClip(state)
     end
 })
 MovementSection:Space()
-MovementSection:Toggle({Flag = "WalkOnWaterToggle", Title = "Walk on Water", Default = Config.WalkOnWater, 
+MovementSection:Toggle({
+    Flag = "WalkOnWaterToggle",
+    Title = "Walk on Water",
+    Default = Config.WalkOnWater,
     Callback = function(state)
         Config.WalkOnWater = state
         Modules.Player.ToggleWalkOnWater(state)
@@ -629,186 +757,91 @@ MovementSection:Toggle({Flag = "WalkOnWaterToggle", Title = "Walk on Water", Def
 })
 
 local FlySection = PlayerTab:Section({Title = "Fly", Opened = true})
-FlySection:Toggle({Flag = "Fly", Title = "Toggle Fly", Default = Config.Fly, 
+FlySection:Toggle({
+    Flag = "Fly",
+    Title = "Toggle Fly",
+    Default = Config.Fly,
     Callback = function(state)
         Config.Fly = state
         Modules.Player.ToggleFly(state)
     end
 })
 FlySection:Space()
-FlySection:Slider({Flag = "FlySlider", Title = "Set Fly Speed", Step = 1, Value = {Min = 50, Max = 300, Default = Config.FlySpeed}, 
+FlySection:Slider({
+    Flag = "FlySlider",
+    Title = "Set Fly Speed",
+    Step = 1,
+    Value = {
+        Min = 50,
+        Max = 300,
+        Default = Config.FlySpeed
+    },
     Callback = function(value)
         Config.FlySpeed = value
         Modules.Player.SetFlySpeed(value)
     end
 })
 FlySection:Space()
-FlySection:Button({Flag = "FlyMobile", Title = "Fly Gui", Desc = "Fly gui work for all device", Callback = function() 
-    Notify("Fly UI", "Opening Fly ui")
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))() 
-end})
-
+FlySection:Button({
+    Flag = "FlyMobile",
+    Title = "Fly Gui",
+    Desc = "Fly gui work for all device",
+    Callback = function()
+        Notify("Fly UI", "Opening Fly ui", "plane")
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
+    end
+})
 
 -- ====================================================================
---                         //ANCHOR SHOP TAB
--- ==================================================================== //tab3
+--                         SHOP TAB
+-- ====================================================================
 local ShopTab = Window:Tab({Title = "Shop", Icon = "store"})
+
 local Shop = {
     ["Bait"] = {
-        ["Topwater Bait (100$)"] = {
-            Id = 10,
-            Icon = "rbxassetid://78313664669418"
-        },
-        ["Luck Bait (1K$)"] = {
-            Id = 2,
-            Icon = "rbxassetid://106827914793722"
-        },
-        ["Midnight Bait (3K$)"] = {
-            Id = 3,
-            Icon = "rbxassetid://82435085190109"
-        },
-        ["Nature Bait (83.5K$)"] = {
-            Id = 17,
-            Icon = "rbxassetid://115616199958924"
-        },
-        ["Chroma Bait (290K$)"] = {
-            Id = 6,
-            Icon = "rbxassetid://123495869001051"
-        },
-        ["Dark Matter Bait (630K$)"] = {
-            Id = 8,
-            Icon = "rbxassetid://77040147828550"
-        },
-        ["Corrupt Bait (1.15M$)"] = {
-            Id = 15,
-            Icon = "rbxassetid://115453224698341"
-        },
-        ["Aether Bait (3.7M$)"] = {
-            Id = 16,
-            Icon = "rbxassetid://91317933862702"
-        },
-        ["Floral Bait (4.00M$)"] = {
-            Id = 20,
-            Icon = "rbxassetid://80119465171442"
-        },
-        ["Singularity Bait (8.2M$)"] = {
-            Id = 18,
-            Icon = "rbxassetid://139381330729877"
-        },
+        ["Topwater Bait (100$)"] = {Id = 10, Icon = "rbxassetid://78313664669418"},
+        ["Luck Bait (1K$)"] = {Id = 2, Icon = "rbxassetid://106827914793722"},
+        ["Midnight Bait (3K$)"] = {Id = 3, Icon = "rbxassetid://82435085190109"},
+        ["Nature Bait (83.5K$)"] = {Id = 17, Icon = "rbxassetid://115616199958924"},
+        ["Chroma Bait (290K$)"] = {Id = 6, Icon = "rbxassetid://123495869001051"},
+        ["Dark Matter Bait (630K$)"] = {Id = 8, Icon = "rbxassetid://77040147828550"},
+        ["Corrupt Bait (1.15M$)"] = {Id = 15, Icon = "rbxassetid://115453224698341"},
+        ["Aether Bait (3.7M$)"] = {Id = 16, Icon = "rbxassetid://91317933862702"},
+        ["Floral Bait (4.00M$)"] = {Id = 20, Icon = "rbxassetid://80119465171442"},
+        ["Singularity Bait (8.2M$)"] = {Id = 18, Icon = "rbxassetid://139381330729877"},
     },
     ["Rods"] = {
-        ["Luck Rod (350$)"] = {
-            Id = 79,
-            Icon = "rbxassetid://127110979437680"
-        },
-        ["Carbon Rod (900$)"] = {
-            Id = 76,
-            Icon = "rbxassetid://124099699625912"
-        },
-        ["Grass Rod (1,5K$)"] = {
-            Id = 85,
-            Icon = "rbxassetid://130802650199282"
-        },
-        ["Demascus Rod (3K$)"] = {
-            Id = 77,
-            Icon = "rbxassetid://92202353564703"
-        },
-        ["Ice Rod (5K$)"] = {
-            Id = 78,
-            Icon = "rbxassetid://92630142441112"
-        },
-        ["Lucky Rod (15K$)"] = {
-            Id = 4,
-            Icon = "rbxassetid://85174841193446"
-        },
-        ["Midnight Rod (50K$)"] = {
-            Id = 80,
-            Icon = "rbxassetid://130162999569066"
-        },
-        ["SteamPunk Rod (215K$)"] = {
-            Id = 6,
-            Icon = "rbxassetid://0109211472277743"
-        },
-        ["Chrome Rod (437K$)"] = {
-            Id = 7,
-            Icon = "rbxassetid://83222944871842"
-        },
-        ["Fluorescent Rod (715K$)"] = {
-            Id = 255,
-            Icon = "rbxassetid://83998636831250"
-        },
-        ["Astral Rod (1M$)"] = {
-            Id = 5,
-            Icon = "rbxassetid://123734625865292"
-        },
-        ["Ares Rod (3M$)"] = {
-            Id = 126,
-            Icon = "rbxassetid://74424529377774"
-        },
-        ["Angler Rod (8M$)"] = {
-            Id = 168,
-            Icon = "rbxassetid://76924330674942"
-        },
-        ["Bambo Rod (12M$)"] = {
-            Id = 258,
-            Icon = "rbxassetid://95236691549566"
-        },
+        ["Luck Rod (350$)"] = {Id = 79, Icon = "rbxassetid://127110979437680"},
+        ["Carbon Rod (900$)"] = {Id = 76, Icon = "rbxassetid://124099699625912"},
+        ["Grass Rod (1,5K$)"] = {Id = 85, Icon = "rbxassetid://130802650199282"},
+        ["Demascus Rod (3K$)"] = {Id = 77, Icon = "rbxassetid://92202353564703"},
+        ["Ice Rod (5K$)"] = {Id = 78, Icon = "rbxassetid://92630142441112"},
+        ["Lucky Rod (15K$)"] = {Id = 4, Icon = "rbxassetid://85174841193446"},
+        ["Midnight Rod (50K$)"] = {Id = 80, Icon = "rbxassetid://130162999569066"},
+        ["SteamPunk Rod (215K$)"] = {Id = 6, Icon = "rbxassetid://0109211472277743"},
+        ["Chrome Rod (437K$)"] = {Id = 7, Icon = "rbxassetid://83222944871842"},
+        ["Fluorescent Rod (715K$)"] = {Id = 255, Icon = "rbxassetid://83998636831250"},
+        ["Astral Rod (1M$)"] = {Id = 5, Icon = "rbxassetid://123734625865292"},
+        ["Ares Rod (3M$)"] = {Id = 126, Icon = "rbxassetid://74424529377774"},
+        ["Angler Rod (8M$)"] = {Id = 168, Icon = "rbxassetid://76924330674942"},
+        ["Bambo Rod (12M$)"] = {Id = 258, Icon = "rbxassetid://95236691549566"},
     },
     ["Weather"] = {
-        ["Wind (10K$)"] = {
-            Id = "Wind",
-            Icon = "rbxassetid://83206005633160"
-        },
-        ["Snow (15K$)"] = {
-            Id = "Snow",
-            Icon = "rbxassetid://102119250093406"
-        },
-        ["Cloudy (20K$)"] = {
-            Id = "Cloudy",
-            Icon = "rbxassetid://72258943070104"
-        },
-        ["Strom (35K$)"] = {
-            Id = "Strom",
-            Icon = "rbxassetid://111709787385701"
-        },
-        ["Radiant (50K$)"] = {
-            Id = "Radiant",
-            Icon = "rbxassetid://9940992285"
-        },
-        ["Shark Hunt (300K$)"] = {
-            Id = "Shark Hunt",
-            Icon = "rbxassetid://74938397479780"
-        },                
+        ["Wind (10K$)"] = {Id = "Wind", Icon = "rbxassetid://83206005633160"},
+        ["Snow (15K$)"] = {Id = "Snow", Icon = "rbxassetid://102119250093406"},
+        ["Cloudy (20K$)"] = {Id = "Cloudy", Icon = "rbxassetid://72258943070104"},
+        ["Strom (35K$)"] = {Id = "Strom", Icon = "rbxassetid://111709787385701"},
+        ["Radiant (50K$)"] = {Id = "Radiant", Icon = "rbxassetid://9940992285"},
+        ["Shark Hunt (300K$)"] = {Id = "Shark Hunt", Icon = "rbxassetid://74938397479780"},
     },
     ["Boat"] = {
-        ["Small Boat (300$)"] = {
-            Id = 1,
-            Icon = "rbxassetid://73604149951518"
-        },
-        ["Kayak (1,1K$)"] = {
-            Id = 2,
-            Icon = "rbxassetid://98871646506689"
-        },
-        ["Jetski (7,5K$)"] = {
-            Id = 3,
-            Icon = "rbxassetid://91216671973985"
-        },
-        ["Highfield Boat (35K$)"] = {
-            Id = 4,
-            Icon = "rbxassetid://75395154459652"
-        },
-        ["Speed Boat (70K$)"] = {
-            Id = 5,
-            Icon = "rbxassetid://140091900313483"
-        },
-        ["Fishing Boat (180K$)"] = {
-            Id = 6,
-            Icon = "rbxassetid://117568546918502"
-        },
-        ["Mini Yacht (1,2M$)"] = {
-            Id = 14,
-            Icon = "rbxassetid://74219886115935"
-        },              
+        ["Small Boat (300$)"] = {Id = 1, Icon = "rbxassetid://73604149951518"},
+        ["Kayak (1,1K$)"] = {Id = 2, Icon = "rbxassetid://98871646506689"},
+        ["Jetski (7,5K$)"] = {Id = 3, Icon = "rbxassetid://91216671973985"},
+        ["Highfield Boat (35K$)"] = {Id = 4, Icon = "rbxassetid://75395154459652"},
+        ["Speed Boat (70K$)"] = {Id = 5, Icon = "rbxassetid://140091900313483"},
+        ["Fishing Boat (180K$)"] = {Id = 6, Icon = "rbxassetid://117568546918502"},
+        ["Mini Yacht (1,2M$)"] = {Id = 14, Icon = "rbxassetid://74219886115935"},
     }
 }
 
@@ -822,29 +855,27 @@ for name, data in pairs(Shop["Rods"]) do
         PriceValue = parsePrice(name)
     })
 end
+table.sort(rodList, function(a, b) return a.PriceValue < b.PriceValue end)
 
-table.sort(rodList, function(a, b)
-    return a.PriceValue < b.PriceValue
-end)
-
-local selectedRod
-local BuyRodSection = ShopTab:Section({ Title = "Buy Rods", Opened = true })
-BuyRodSection:Dropdown({ Title = "Select Rod", Values = rodList, Value = rodList[1],
+local BuyRodSection = ShopTab:Section({Title = "Buy Rods", Opened = true})
+BuyRodSection:Dropdown({
+    Flag = "SelectedRodDropdown",
+    Title = "Select Rod",
+    Values = rodList,
+    Value = rodList[1],
     Callback = function(option)
-        selectedRod = option
+        Config.SelectedRod = option
     end
 })
 BuyRodSection:Space()
-BuyRodSection:Button({ Title = "Buy Selected Rod",
+BuyRodSection:Button({
+    Title = "Buy Selected Rod",
     Callback = function()
-        if not selectedRod then
-            return
-        end
-        Events.buyrod:InvokeServer(selectedRod.Id)
-        --Notify("Purchase Rod", "Successfully purchased "..selectedRod.Title, selectedRod.Icon)
+        if not Config.SelectedRod then return end
+        Events.buyrod:InvokeServer(Config.SelectedRod.Id)
+        Notify("Purchase Rod", "Purchased " .. Config.SelectedRod.Title, "shopping-cart")
     end
 })
-
 
 -- BUY BAIT
 local baitList = {}
@@ -856,30 +887,29 @@ for name, data in pairs(Shop["Bait"]) do
         PriceValue = parsePrice(name)
     })
 end
+table.sort(baitList, function(a, b) return a.PriceValue < b.PriceValue end)
 
-table.sort(baitList, function(a, b)
-    return a.PriceValue < b.PriceValue
-end)
-
-local selectedBait
-local BuyBaitSection = ShopTab:Section({ Title = "Buy Bait", Opened = true })
-BuyBaitSection:Dropdown({ Title = "Select Bait", Values = baitList, Value = baitList[1],
+local BuyBaitSection = ShopTab:Section({Title = "Buy Bait", Opened = true})
+BuyBaitSection:Dropdown({
+    Flag = "SelectedBaitDropdown",
+    Title = "Select Bait",
+    Values = baitList,
+    Value = baitList[1],
     Callback = function(option)
-        selectedBait = option
+        Config.SelectedBait = option
     end
 })
 BuyBaitSection:Space()
-BuyBaitSection:Button({ Title = "Buy Selected Bait",
+BuyBaitSection:Button({
+    Title = "Buy Selected Bait",
     Callback = function()
-        if not selectedBait then
-           return 
-        end
-        Events.buybait:InvokeServer(selectedBait.Id)
-        --Notify("Purchase Bait", "Successfully purchased "..selected.Title, selected.Icon)
+        if not Config.SelectedBait then return end
+        Events.buybait:InvokeServer(Config.SelectedBait.Id)
+        Notify("Purchase Bait", "Purchased " .. Config.SelectedBait.Title, "shopping-cart")
     end
 })
 
--- BUY Weather
+-- BUY WEATHER
 local weatherlist = {}
 for name, data in pairs(Shop["Weather"]) do
     table.insert(weatherlist, {
@@ -889,30 +919,29 @@ for name, data in pairs(Shop["Weather"]) do
         PriceValue = parsePrice(name)
     })
 end
+table.sort(weatherlist, function(a, b) return a.PriceValue < b.PriceValue end)
 
-table.sort(weatherlist, function(a, b)
-    return a.PriceValue < b.PriceValue
-end)
-
-local selectedWeather
-local BuyWeatherSection = ShopTab:Section({ Title = "Buy Weather", Opened = true })
-BuyWeatherSection:Dropdown({ Title = "Select Weather", Values = weatherlist, Value = weatherlist[1],
+local BuyWeatherSection = ShopTab:Section({Title = "Buy Weather", Opened = true})
+BuyWeatherSection:Dropdown({
+    Flag = "SelectedWeatherDropdown",
+    Title = "Select Weather",
+    Values = weatherlist,
+    Value = weatherlist[1],
     Callback = function(option)
-        selectedWeather = option
+        Config.SelectedWeather = option
     end
 })
 BuyWeatherSection:Space()
-BuyWeatherSection:Button({ Title = "Buy Selected Weather",
+BuyWeatherSection:Button({
+    Title = "Buy Selected Weather",
     Callback = function()
-        if not selectedWeather then
-           return 
-        end
-        Events.buyweather:InvokeServer(selectedWeather.Id)
-        --Notify("Purchase Bait", "Successfully purchased "..selected.Title, selected.Icon)
+        if not Config.SelectedWeather then return end
+        Events.buyweather:InvokeServer(Config.SelectedWeather.Id)
+        Notify("Purchase Weather", "Purchased " .. Config.SelectedWeather.Title, "shopping-cart")
     end
 })
 
--- BUY Boat
+-- BUY BOAT
 local boatlist = {}
 for name, data in pairs(Shop["Boat"]) do
     table.insert(boatlist, {
@@ -922,145 +951,213 @@ for name, data in pairs(Shop["Boat"]) do
         PriceValue = parsePrice(name)
     })
 end
+table.sort(boatlist, function(a, b) return a.PriceValue < b.PriceValue end)
 
-table.sort(boatlist, function(a, b)
-    return a.PriceValue < b.PriceValue
-end)
-
-local selectedBoat
-local BuyBoatSection = ShopTab:Section({ Title = "Buy Boat", Opened = true })
-BuyBoatSection:Dropdown({ Title = "Select Boat", Values = boatlist, Value = boatlist[1],
+local BuyBoatSection = ShopTab:Section({Title = "Buy Boat", Opened = true})
+BuyBoatSection:Dropdown({
+    Flag = "SelectedBoatDropdown",
+    Title = "Select Boat",
+    Values = boatlist,
+    Value = boatlist[1],
     Callback = function(option)
-        selectedBoat = option
+        Config.SelectedBoat = option
     end
 })
 BuyBoatSection:Space()
-BuyBoatSection:Button({ Title = "Buy Selected Boat",
+BuyBoatSection:Button({
+    Title = "Buy Selected Boat",
     Callback = function()
-        if not selectedBoat then
-           return 
-        end
-        Events.buyboat:InvokeServer(selectedBoat.Id)
+        if not Config.SelectedBoat then return end
+        Events.buyboat:InvokeServer(Config.SelectedBoat.Id)
+        Notify("Purchase Boat", "Purchased " .. Config.SelectedBoat.Title, "shopping-cart")
     end
 })
 
 -- MERCHANT
-local function OpenMerchant(state)
-    Config.MerchantOpen = state
-    pcall(function()
-        game:GetService("Players").LocalPlayer.PlayerGui.Merchant.Enabled = state
-    end)
-end
-
-
-local MerchantSection = ShopTab:Section({ Title = "Merchant Shop", Opened = true })
-MerchantSection:Toggle({ Flag = "OpenMerchantShop", Title = "Open Merchant Shop", Default = Config.MerchantOpen,
+local MerchantSection = ShopTab:Section({Title = "Merchant Shop", Opened = true})
+MerchantSection:Toggle({
+    Flag = "OpenMerchantShop",
+    Title = "Open Merchant Shop",
+    Default = Config.MerchantOpen,
     Callback = function(state)
         OpenMerchant(state)
     end
 })
 
 -- ====================================================================
---                         //ANCHOR TELEPORT TAB
--- ==================================================================== //tab4
+--                         TELEPORT TAB
+-- ====================================================================
 local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
 
+-- AUTO TELEPORT TO SPOT
+local SpotSection = TeleportTab:Section({Title = "Auto Teleport to Fishing Spot", Opened = true})
+SpotSection:Button({Title = "Set Fishing Spot", 
+    Callback = function()
+        Config.SavedSpot = Character.HumanoidRootPart.CFrame
+        Notify("Auto Teleport", "Auto Teleport to Island Enabled", "map-pin")
+    end
+})
+SpotSection:Space()
+
+SpotSection:Toggle({
+    Flag = "AutoTeleportToSpot",
+    Title = "Auto Teleport Spot",
+    Desc = "Automatically teleport to spot while enable, delay 1 second",
+    Default = Config.AutoFishSpot,
+    Callback = function(state)
+        if Config.SavedSpot == nil then
+            Notify("Error", "You must set a fishing spot first by clicking the button above!", "x")
+            return
+        end
+        Character.HumanoidRootPart.CFrame = Config.SavedSpot
+        Config.AutoFishSpot = state
+    end
+})
+
 -- ISLAND TELEPORT
-local IslandSection = TeleportTab:Section({ Title = "Island Teleport", Opened = true })
-IslandSection:Dropdown({ Title = "Select Island Teleport", Values = islandNames, Value = selectedIsland,
+local IslandSection = TeleportTab:Section({Title = "Island Teleport", Opened = true})
+IslandSection:Dropdown({
+    Flag = "SelectedIslandDropdown",
+    Title = "Select Island Teleport",
+    Values = islandNames,
+    Value = islandNames[1],
     Callback = function(opt)
-        selectedIsland = opt
+        Config.SelectedIsland = opt
     end
 })
 IslandSection:Space()
-IslandSection:Button({ Title = "Teleport",
+IslandSection:Button({
+    Title = "Teleport",
     Callback = function()
-        local success, err = Modules.Location.TeleportTo("Island", selectedIsland)
+        local success, err = Modules.Location.TeleportTo("Island", Config.SelectedIsland)
         if success then
-            Notify("Teleport", "Teleported to " .. selectedIsland .. " (Island)", "map-pin")
+            Notify("Teleport", "Teleported to " .. Config.SelectedIsland .. " (Island)", "map-pin")
         else
-            Notify("Teleport Failed", err, "cancel")
+            Notify("Teleport Failed", err, "x")
         end
     end
 })
 
+
 -- GAME EVENT TELEPORT
-local GameEventSection = TeleportTab:Section({ Title = "Game Event Teleport", Opened = true })
-GameEventSection:Dropdown({ Title = "Select Game Event", Values = eventNames, Value = selectedEvent, Callback = function(opt) selectedEvent = opt end })
+local GameEventSection = TeleportTab:Section({Title = "Game Event Teleport", Opened = true})
+GameEventSection:Dropdown({
+    Flag = "SelectedEventDropdown",
+    Title = "Select Game Event",
+    Values = eventNames,
+    Value = eventNames[1],
+    Callback = function(opt)
+        Config.SelectedEvent = opt
+    end
+})
 GameEventSection:Space()
-GameEventSection:Button({ Title = "Teleport",
+GameEventSection:Button({
+    Title = "Teleport",
     Callback = function()
-        local success, err = Modules.Location.TeleportTo("GameEvent", selectedEvent)
+        local success, err = Modules.Location.TeleportTo("GameEvent", Config.SelectedEvent)
         if success then
-            Notify("Teleport", "Teleported to " .. selectedEvent .. " (Game Event)", "map-pin")
+            Notify("Teleport", "Teleported to " .. Config.SelectedEvent .. " (Game Event)", "map-pin")
         else
-            Notify("Teleport Failed", err, "cancel")
+            Notify("Teleport Failed", err, "x")
         end
     end
 })
 
 -- NPC TELEPORT
-local NPCSection = TeleportTab:Section({ Title = "NPC Teleport", Opened = true })
-NPCSection:Dropdown({ Title = "Select NPC", Values = npcNames, Value = selectedNPC, Callback = function(opt) selectedNPC = opt end})
+local NPCSection = TeleportTab:Section({Title = "NPC Teleport", Opened = true})
+NPCSection:Dropdown({
+    Flag = "SelectedNPCDropdown",
+    Title = "Select NPC",
+    Values = npcNames,
+    Value = npcNames[1],
+    Callback = function(opt)
+        Config.SelectedNPC = opt
+    end
+})
 NPCSection:Space()
-NPCSection:Button({ Title = "Teleport",
+NPCSection:Button({
+    Title = "Teleport",
     Callback = function()
-        local success, err = Modules.Location.TeleportTo("NPC", selectedNPC)
+        local success, err = Modules.Location.TeleportTo("NPC", Config.SelectedNPC)
         if success then
-            Notify("Teleport", "Teleport" .. selectedNPC .. " (NPC)", "map-pin")
+            Notify("Teleport", "Teleported to " .. Config.SelectedNPC .. " (NPC)", "map-pin")
         else
-            Notify("Teleport Failed", err, "cancel")
+            Notify("Teleport Failed", err, "x")
         end
     end
 })
 
 -- PLAYER TELEPORT
-local selectedPlayer = nil
 local PlayerTeleportSection = TeleportTab:Section({Title = "Player Teleport", Opened = true})
-local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({Title = "Select Player", Values = GetAllPlayerNames(), Value = GetAllPlayerNames()[1] or "None", Callback = function(option) selectedPlayer = option end})
+local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({
+    Flag = "SelectedPlayerDropdown",
+    Title = "Select Player",
+    Values = GetAllPlayerNames(),
+    Value = GetAllPlayerNames()[1] or "None",
+    Callback = function(option)
+        Config.SelectedPlayer = option
+    end
+})
 PlayerTeleportSection:Space()
-PlayerTeleportSection:Button({Flag = "Refresh_player", Title = "Refresh", Callback = function() RefreshPlayersDropdown(PlayerTeleport_1) end})
+PlayerTeleportSection:Button({
+    Flag = "Refresh_player",
+    Title = "Refresh",
+    Callback = function()
+        RefreshPlayersDropdown(PlayerTeleport_1)
+    end
+})
 PlayerTeleportSection:Space()
-PlayerTeleportSection:Button({Flag = "Go_player", Title = "Teleport to Selected Player", Callback = function() TeleportToPlayerByName(selectedPlayer) end})
+PlayerTeleportSection:Button({
+    Flag = "Go_player",
+    Title = "Teleport to Selected Player",
+    Callback = function()
+        TeleportToPlayerByName(Config.SelectedPlayer)
+    end
+})
 
 -- POSITION MANAGEMENT
-PositionManagementSection= TeleportTab:Section({Title = "Position Management", Opened = true})
+local PositionManagementSection = TeleportTab:Section({Title = "Position Management", Opened = true})
 local locationName = ""
-local savedPositions = {}
 
-PositionManagementSection:Input({Title = "Location Name", Placeholder = "Input location name...", Value = locationName, 
+PositionManagementSection:Input({
+    Flag = "LocationNameInput",
+    Title = "Location Name",
+    Placeholder = "Input location name...",
+    Value = locationName,
     Callback = function(input)
         locationName = input
     end
 })
 PositionManagementSection:Space()
-PositionManagementSection:Button({Title = "Save Location", Flag = "FRTYSRHHH",
+PositionManagementSection:Button({
+    Title = "Save Location",
     Callback = function()
         if locationName == "" or locationName == nil then
-            Notify("Error", "Nama lokasi harus diisi terlebih dahulu!", "circle-x")
+            Notify("Error", "Location name must be filled first!", "x")
             return
         end
         local player = game.Players.LocalPlayer
         local char = player.Character or player.CharacterAdded:Wait()
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
-            savedPositions[locationName] = root.CFrame
-            Notify("Success", "Posisi '"..locationName.."' Successfully saved.", "check")
+            Config.SavedPositions[locationName] = root.CFrame
+            Notify("Success", "Position '"..locationName.."' successfully saved.", "check")
         else
-            Notify("Error", "Invalid player.", "circle-x")
+            Notify("Error", "Invalid player.", "x")
         end
     end
 })
 PositionManagementSection:Space()
-PositionManagementSection:Button({Flag = "FTHRT5SSD", Title = "Load Location",
+PositionManagementSection:Button({
+    Title = "Load Location",
     Callback = function()
         if locationName == "" or locationName == nil then
-            Notify("Error", "Masukkan nama lokasi yang ingin dimuat!", "circle-x")
+            Notify("Error", "Enter location name to load!", "x")
             return
         end
-        local pos = savedPositions[locationName]
+        local pos = Config.SavedPositions[locationName]
         if not pos then
-            Notify("Error", "Lokasi '"..locationName.."' belum disimpan.", "circle-x")
+            Notify("Error", "Location '"..locationName.."' not saved yet.", "x")
             return
         end
         local player = game.Players.LocalPlayer
@@ -1068,111 +1165,187 @@ PositionManagementSection:Button({Flag = "FTHRT5SSD", Title = "Load Location",
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
             root.CFrame = pos
-            Notify("Success", "Berhasil teleport ke lokasi '"..locationName.."'.", "location")
+            Notify("Success", "Successfully teleported to location '"..locationName.."'.", "map-pin")
         else
-            Notify("Error", "HumanoidRootPart tidak ditemukan.", "circle-x")
+            Notify("Error", "HumanoidRootPart not found.", "x")
         end
     end
 })
 
-
 -- ====================================================================
---                         //ANCHOR EXPLORER TAB
--- ==================================================================== //tab4
+--                         EXPLORER TAB
+-- ====================================================================
 local ExplorerTab = Window:Tab({Title = "Explorer", Icon = "server"})
-local ExplorerBtn = ExplorerTab:Button({
+ExplorerTab:Button({
     Title = "Dex Explorer",
-    Desc = "A powerful game explorer GUI. Shows every instance of the game and all their properties. Useful for developers.",
-    Callback = function() 
+    Desc = "A powerful game explorer GUI. Shows every instance of the game and all their properties.",
+    Callback = function()
         Notify("Dex Explorer", "Opening Dex Explorer ui", "check")
-        --loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
     end
-    
 })
 
-
 -- ====================================================================
---                         //ANCHOR SETTINGS TAB
--- ==================================================================== //tab5
-
+--                         SETTINGS TAB
+-- ====================================================================
 local SettingsTab = Window:Tab({Title = "Settings", Icon = "settings"})
 
 -- UI SETTINGS
 local UISection = SettingsTab:Section({Title = "UI Settings", Opened = true})
-UISection:Keybind({Flag = "UIKeybind", Title = "UI Toggle Key", Value = "RightShift", Callback = SetToggleKey})
+UISection:Keybind({
+    Flag = "UIKeybind",
+    Title = "UI Toggle Key",
+    Value = Config.UIToggleKey,
+    Callback = SetToggleKey
+})
 UISection:Space()
-UISection:Button({Title = "Destroy UI", Icon = "shield-off", Callback = DestroyUI})
+UISection:Button({
+    Title = "Destroy UI",
+    Icon = "shield-off",
+    Callback = function()
+        Window:Destroy()
+    end
+})
 
 -- GAME SETTINGS
 local GameSection = SettingsTab:Section({Title = "Game Settings", Opened = true})
-GameSection:Toggle({Flag = "FPSBoostToggle", Title = "FPS Boost", Default = Config.FPSBoost, Callback = ToggleFPSBoost})
+GameSection:Toggle({
+    Flag = "FPSBoostToggle",
+    Title = "FPS Boost",
+    Default = Config.FPSBoost,
+    Callback = ToggleFPSBoost
+})
 GameSection:Space()
-GameSection:Toggle({Flag = "LowGraphicToggle", Title = "Low Graphics", Default = Config.LowGraphics, Callback = ToggleLowGraphics})
+GameSection:Toggle({
+    Flag = "LowGraphicToggle",
+    Title = "Low Graphics",
+    Default = Config.LowGraphics,
+    Callback = ToggleLowGraphics
+})
 GameSection:Space()
-GameSection:Toggle({Flag = "Disable3DRendering", Title = "Disable 3D Rendering", Default = Config.Disable3DRendering, Callback = Toggle3DRenderingDisable})
+GameSection:Toggle({
+    Flag = "Disable3DRendering",
+    Title = "Disable 3D Rendering",
+    Default = Config.Disable3DRendering,
+    Callback = Toggle3DRenderingDisable
+})
 GameSection:Space()
-GameSection:Toggle({Flag = "AntiAFKToggle", Title = "Anti AFK", Default = Config.AntiAFK, Callback = ToggleAntiAFK})
+GameSection:Toggle({
+    Flag = "AntiAFKToggle",
+    Title = "Anti AFK",
+    Default = Config.AntiAFK,
+    Callback = ToggleAntiAFK
+})
 
--- SAVE MANAGER
-local SaveManagerSection = SettingsTab:Section({Title = "Save Manager", Opened = true})
-SaveManagerSection:Button({
+-- SERVER HOPPING
+local ServerHoppingSection = SettingsTab:Section({Title = "Server Hopping", Opened = true})
+ServerHoppingSection:Button({
+    Title = "Rejoin Server",
+    Icon = "refresh-cw",
+    Callback = RejoinServer
+})
+
+
+-- CONFIG MANAGER
+local ConfigTab = SettingsTab:Section({Title = "Config Manager", Opened = true})
+ConfigTab:Input({
+    Flag = "ConfigNameInput",
+    Title = "Config Name",
+    Icon = "file-cog",
+    Placeholder = "Enter config name...",
+    Value = ConfigName,
+    Callback = function(value)
+        ConfigName = value
+    end
+})
+ConfigTab:Space()
+
+local AllConfigs = ConfigManager:AllConfigs()
+local DefaultValue = table.find(AllConfigs, ConfigName) and ConfigName or nil
+
+local ConfigDropdown = ConfigTab:Dropdown({
+    Flag = "AllConfigsDropdown",
+    Title = "All Configs",
+    Desc = "Select existing configs",
+    Values = AllConfigs,
+    Value = DefaultValue,
+    Callback = function(value)
+        ConfigName = value
+    end
+})
+ConfigTab:Space()
+
+ConfigTab:Button({
     Title = "Save Config",
     Icon = "save",
+    Justify = "Center",
     Callback = function()
-        local SaveConfig = ConfigManager:CreateConfig(ConfigName)
-        if SaveConfig:Save() then
-            WindUI:Notify({
-                Title = "Config Saved",
-                Content = "Config '" .. ConfigName .. "' saved!"
-            })
+        Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+        if Window.CurrentConfig:Save() then
+            Notify("Config Saved", "Config '" .. ConfigName .. "' saved successfully!", "check")
+            -- Refresh dropdown
+            local newConfigs = ConfigManager:AllConfigs()
+            ConfigDropdown:SetValues(newConfigs)
+        else
+            Notify("Save Failed", "Failed to save config '" .. ConfigName .. "'", "x")
         end
     end
 })
-SaveManagerSection:Space()
-SaveManagerSection:Button({
+ConfigTab:Space()
+
+ConfigTab:Button({
     Title = "Load Config",
     Icon = "folder",
+    Justify = "Center",
     Callback = function()
-        local LoadConfig = ConfigManager:CreateConfig("default")
+        Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
         local success, err = pcall(function()
-            LoadConfig:Load()
+            Window.CurrentConfig:Load()
         end)
-
+        
         if success then
-            WindUI:Notify({
-                Title = "✅ Config Loaded",
-                Content = "Configuration applied successfully.",
-                Duration = 3
-            })
+            Notify("Config Loaded", "Config '" .. ConfigName .. "' loaded successfully!", "refresh-cw")
         else
-            WindUI:Notify({
-                Title = "❌ Load Failed",
-                Content = tostring(err),
-                Duration = 4
-            })
+            Notify("Load Failed", tostring(err), "x")
         end
     end
 })
-SaveManagerSection:Space()
-SaveManagerSection:Button({
+ConfigTab:Space()
+
+ConfigTab:Button({
     Title = "Delete Config",
     Icon = "trash",
+    Justify = "Center",
     Callback = function()
-        local DeleteConfig = ConfigManager:CreateConfig(ConfigName)
-        if DeleteConfig:Delete() then
-            WindUI:Notify({
-                Title = "Config Deleted",
-                Content = "Deleted config: " .. ConfigName
-            })
+        Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+        if Window.CurrentConfig:Delete() then
+            Notify("Config Deleted", "Config '" .. ConfigName .. "' deleted successfully!", "trash")
+            -- Refresh dropdown
+            local newConfigs = ConfigManager:AllConfigs()
+            ConfigDropdown:SetValues(newConfigs)
+            Cleanup()
         else
-            WindUI:Notify({
-                Title = "Failed to Delete",
-                Content = "No file found for: " .. ConfigName
-            })
+            Notify("Delete Failed", "No file found for: " .. ConfigName, "x")
         end
     end
 })
+ConfigTab:Space()
 
--- DANGER / SERVER HOPPING
-local Endgame = SettingsTab:Section({Title = "Server Hopping", Opened = true})
-Endgame:Button({Title = "Rejoin Server", Icon = "refresh-cw", Callback = RejoinServer})
+ConfigTab:Button({
+    Title = "Refresh Config List",
+    Icon = "refresh-cw",
+    Justify = "Center",
+    Callback = function()
+        local newConfigs = ConfigManager:AllConfigs()
+        ConfigDropdown:SetValues(newConfigs)
+        Notify("Refreshed", "Config list refreshed successfully!", "refresh-cw")
+    end
+})
+
+Window:OnDestroy(function()
+    RejoinServer()
+end)
+-- ====================================================================
+--                         INITIALIZATION COMPLETE
+-- ====================================================================
+Notify("Selena HUB", "Script loaded successfully! v" .. VERSION, "check", 5)
