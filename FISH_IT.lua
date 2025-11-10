@@ -53,6 +53,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local VirtualUser = game:GetService("VirtualUser")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -149,11 +150,6 @@ function Cleanup()
         Config[k] = typeof(v) == "table" and table.clone(v) or v
     end
 
-    ToggleLowGraphics(false)
-    ToggleFPSBoost(false)
-    ToggleAntiAFK(false)
-    Toggle3DRenderingDisable(false)
-
     if ConfigManager then
         ConfigManager:Delete("default")
         ConfigManager:CreateConfig("default"):Save()
@@ -223,6 +219,17 @@ local function TeleportToPlayerByName(name)
             Notify("Teleport to "..target.Name, "Successfully Teleported to selected player", "users")
         end
     end
+end
+
+local function GetGameName(placeId)
+	local success, info = pcall(function()
+		return MarketplaceService:GetProductInfo(placeId)
+	end)
+	if success and info then
+		return info.Name
+	else
+		return "Unknown Game"
+	end
 end
 
 -- ====================================================================
@@ -672,6 +679,11 @@ Window:EditOpenButton({
     Enabled = true,
     Draggable = true,
 })
+
+Window:OnDestroy(function()
+    Cleanup()
+end)
+
 
 Window:Tag({Title = "v" .. VERSION, Icon = "github", Color = Color3.fromHex("#6b31ff")})
 
@@ -1269,14 +1281,6 @@ local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({
 })
 PlayerTeleportSection:Space()
 PlayerTeleportSection:Button({
-    Flag = "Refresh_player",
-    Title = "Refresh",
-    Callback = function()
-        RefreshPlayersDropdown(PlayerTeleport_1)
-    end
-})
-PlayerTeleportSection:Space()
-PlayerTeleportSection:Button({
     Flag = "Go_player",
     Title = "Teleport to Selected Player",
     Callback = function()
@@ -1397,8 +1401,18 @@ GameSection:Toggle({
 local ServerHoppingSection = SettingsTab:Section({Title = "Server Hopping", Opened = true})
 ServerHoppingSection:Button({
     Title = "Rejoin Server",
-    Icon = "refresh-cw",
     Callback = RejoinServer
+})
+
+ServerHoppingSection:Space()
+ServerHoppingSection:Button({
+    Title = "Hop to New Server",
+    Icon = "arrow-right-circle",
+    Callback = function()
+        Notify("Server Hop", "Hopping to new server...", "arrow-right-circle")
+        local u1 = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
+        u1:Teleport(game.PlaceId)
+    end
 })
 
 
@@ -1494,6 +1508,16 @@ ConfigTab:Button({
     end
 })
 
-Window:OnDestroy(function()
-    Cleanup()
+--[[ FINALIZE ]]
+Players.PlayerAdded:Connect(function()
+    RefreshPlayersDropdown(PlayerTeleport_1)
 end)
+Players.PlayerRemoving:Connect(function()
+    RefreshPlayersDropdown(PlayerTeleport_1)
+end)
+
+print("────────────────────────────")
+print("💉 Selena HUB Executed Successfully")
+print("Game: "..GetGameName(game.PlaceId).." | Version: "..VERSION)
+print("Status: Modules Loaded, UI Initialized ✅")
+print("────────────────────────────")
