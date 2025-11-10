@@ -1,10 +1,4 @@
---[[
-    Player Utility Module
-    Provides movement & ability functions for Player tab.
-    Author: xeAtheo
-    Last Update: 2025-11-04
-]]
-
+--[[ SERVICES & VARIABLES ]]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,52 +7,69 @@ local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 
--- STATE
-local InfiniteJumpEnabled = false
-local NoClipEnabled = false
-local FlyEnabled = false
-local FlySpeed = 50
+local Config = {
+	InfiniteJumpEnabled = false,
+	NoClipEnabled = false,
+	FlyEnabled = false,
+	FlySpeed = 50,
+	FlyBodyGyro = nil,
+	FlyBodyVelocity = nil
+}
 
-local FlyBodyGyro, FlyBodyVelocity
+--[[ CONNECTIONS ]]
+UserInputService.JumpRequest:Connect(function()
+	if Config.InfiniteJumpEnabled and Humanoid then
+		Humanoid:ChangeState("Jumping")
+	end
+end)
 
--- ✅ WALK SPEED
-local function SetWalkSpeed(value)
+RunService.Stepped:Connect(function()
+	if Config.NoClipEnabled and Character then
+		for _, part in pairs(Character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = not Config.NoClipEnabled
+			end
+		end
+	end
+end)
+
+--[[ ALL FUNCTION ]]
+function SetWalkSpeed(value)
 	if Humanoid then Humanoid.WalkSpeed = value end
 end
 
--- ✅ JUMP POWER
-local function SetJumpPower(value)
+function SetJumpPower(value)
 	if Humanoid then
 		Humanoid.UseJumpPower = true
 		Humanoid.JumpPower = value
 	end
 end
 
--- ✅ TRUE FLY SYSTEM
-local function SetFlySpeed(value)
-	FlySpeed = value
+function SetFlySpeed(value)
+	Config.FlySpeed = value
 end
 
-local function ToggleFly(state)
-	FlyEnabled = state
+function ToggleFly(state)
+	Config.FlyEnabled = state
 	local HRP = Character:FindFirstChild("HumanoidRootPart")
 	if not HRP then return end
 
 	if state then
 		Humanoid.PlatformStand = true
-		FlyBodyGyro = Instance.new("BodyGyro")
-		FlyBodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-		FlyBodyGyro.P = 9e4
-		FlyBodyGyro.CFrame = HRP.CFrame
-		FlyBodyGyro.Parent = HRP
 
-		FlyBodyVelocity = Instance.new("BodyVelocity")
-		FlyBodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-		FlyBodyVelocity.Velocity = Vector3.zero
-		FlyBodyVelocity.Parent = HRP
+		Config.FlyBodyGyro = Instance.new("BodyGyro")
+		Config.FlyBodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+		Config.FlyBodyGyro.P = 9e4
+		Config.FlyBodyGyro.CFrame = HRP.CFrame
+		Config.FlyBodyGyro.Parent = HRP
+
+		Config.FlyBodyVelocity = Instance.new("BodyVelocity")
+		Config.FlyBodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		Config.FlyBodyVelocity.Velocity = Vector3.zero
+		Config.FlyBodyVelocity.Parent = HRP
 
 		RunService.RenderStepped:Connect(function()
-			if not FlyEnabled or not HRP then return end
+			if not Config.FlyEnabled or not HRP then return end
 
 			local camCF = workspace.CurrentCamera.CFrame
 			local moveDir = Vector3.zero
@@ -70,54 +81,45 @@ local function ToggleFly(state)
 			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
 			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= Vector3.new(0, 1, 0) end
 
-			FlyBodyGyro.CFrame = camCF
-			FlyBodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * FlySpeed or Vector3.zero
+			Config.FlyBodyGyro.CFrame = camCF
+			Config.FlyBodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * Config.FlySpeed or Vector3.zero
 		end)
 	else
 		Humanoid.PlatformStand = false
-		if FlyBodyGyro then FlyBodyGyro:Destroy() end
-		if FlyBodyVelocity then FlyBodyVelocity:Destroy() end
+		if Config.FlyBodyGyro then Config.FlyBodyGyro:Destroy() Config.FlyBodyGyro = nil end
+		if Config.FlyBodyVelocity then Config.FlyBodyVelocity:Destroy() Config.FlyBodyVelocity = nil end
 	end
 end
 
--- ✅ FLY GUI (MOBILE)
-local function OpenFlyGuiMobile()
+function OpenFlyGuiMobile()
 	game.StarterGui:SetCore("SendNotification", {
 		Title = "Fly GUI",
-		Text = "Mobile fly control coming soon.",
+		Text = "Fly GUI Successfully Open.",
 		Duration = 3
 	})
-	
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
 end
 
--- ✅ INFINITE JUMP
-UserInputService.JumpRequest:Connect(function()
-	if InfiniteJumpEnabled and Humanoid then
-		Humanoid:ChangeState("Jumping")
+function ToggleInfiniteJump(state)
+	Config.InfiniteJumpEnabled = state
+end
+
+function ToggleNoClip(state)
+	Config.NoClipEnabled = state
+end
+
+Player.CharacterAdded:Connect(function(newChar)
+	Character = newChar
+	Humanoid = newChar:WaitForChild("Humanoid")
+
+	if Config.InfiniteJumpEnabled then ToggleInfiniteJump(true) end
+	if Config.NoClipEnabled then ToggleNoClip(true) end
+	if Config.FlyEnabled then
+		task.wait(1)
+		ToggleFly(true)
 	end
 end)
 
-local function ToggleInfiniteJump(state)
-	InfiniteJumpEnabled = state
-end
-
--- ✅ NOCLIP
-RunService.Stepped:Connect(function()
-	if NoClipEnabled and Character then
-		for _, part in pairs(Character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = not NoClipEnabled
-			end
-		end
-	end
-end)
-
-local function ToggleNoClip(state)
-	NoClipEnabled = state
-end
-
--- ✅ RETURN MODULE
 return {
 	SetWalkSpeed = SetWalkSpeed,
 	SetJumpPower = SetJumpPower,

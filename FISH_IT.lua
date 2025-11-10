@@ -10,6 +10,11 @@ local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
 
 -- ====== CRITICAL DEPENDENCY VALIDATION ======
+local existingWindow = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("SelenaHUB_UI_Window")
+if existingWindow then
+    existingWindow:Destroy()
+end
+
 local success, errorMsg = pcall(function()
     local services = {
         game = game,
@@ -86,6 +91,10 @@ local DefaultConfig = {
     FlySpeed = 50,
     
     -- Graphics Settings
+    AntiAFKConnection = nil,
+    DisabledEffects = {},
+    HiddenDecals = {},
+
     FPSBoost = false,
     LowGraphics = false,
     Disable3DRendering = false,
@@ -112,6 +121,25 @@ local DefaultConfig = {
 local Config = {}
 for k, v in pairs(DefaultConfig) do Config[k] = v end
 
+-- Location Lists
+local islandNames = {}
+for name in pairs(Modules.Location.LOCATIONS["Island"]) do
+    table.insert(islandNames, name)
+end
+table.sort(islandNames)
+
+local eventNames = {}
+for name in pairs(Modules.Location.LOCATIONS["GameEvent"]) do
+    table.insert(eventNames, name)
+end
+table.sort(eventNames)
+
+local npcNames = {}
+for name in pairs(Modules.Location.LOCATIONS["NPC"]) do
+    table.insert(npcNames, name)
+end
+table.sort(npcNames)
+
 -- ====================================================================
 --                     UTILITY FUNCTIONS
 -- ====================================================================
@@ -120,7 +148,17 @@ function Cleanup()
     for k, v in pairs(DefaultConfig) do
         Config[k] = typeof(v) == "table" and table.clone(v) or v
     end
-    print("[Cleanup] Config reset to default values.")
+
+    ToggleLowGraphics(false)
+    ToggleFPSBoost(false)
+    ToggleAntiAFK(false)
+    Toggle3DRenderingDisable(false)
+
+    if ConfigManager then
+        ConfigManager:Delete("default")
+        ConfigManager:CreateConfig("default"):Save()
+    end
+    Notify("Cleanup", "All settings reset to default.", "trash")
 end
 
 
@@ -166,23 +204,12 @@ end
 
 local Events = getNetworkEvents()
 
--- ====================================================================
---                        GAME FUNCTIONS
--- ====================================================================
-
--- Teleport Functions
 local function GetAllPlayerNames()
     local names = {}
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= Player then table.insert(names, plr.Name) end
     end
     return names
-end
-
-local function RefreshPlayersDropdown(dropdown)
-    local newList = GetAllPlayerNames()
-    dropdown:SetValues(newList)
-    Notify("Refresh player list", "Successfully Refreshed player list", "refresh-ccw")
 end
 
 local function TeleportToPlayerByName(name)
@@ -198,45 +225,53 @@ local function TeleportToPlayerByName(name)
     end
 end
 
--- Location Lists
-local islandNames = {}
-for name in pairs(Modules.Location.LOCATIONS["Island"]) do
-    table.insert(islandNames, name)
-end
-table.sort(islandNames)
+-- ====================================================================
+--                        GAME FUNCTIONS
+-- ====================================================================
 
-local eventNames = {}
-for name in pairs(Modules.Location.LOCATIONS["GameEvent"]) do
-    table.insert(eventNames, name)
+-- SINGLE FUNCTION
+local function RedeemCode()
+    local codes = { "CRYSTALS", "BLAMETALON", "SORRY" }
+    for _, code in ipairs(codes) do
+        Events.redeemCode:InvokeServer(code)
+        task.wait(0.5)
+        Notify("Redeem Code", "Successfully Redeem Code "..code, "ticket")
+    end
 end
-table.sort(eventNames)
 
-local npcNames = {}
-for name in pairs(Modules.Location.LOCATIONS["NPC"]) do
-    table.insert(npcNames, name)
+local function RefreshPlayersDropdown(dropdown)
+    local newList = GetAllPlayerNames()
+    dropdown:SetValues(newList)
+    Notify("Refresh player list", "Successfully Refreshed player list", "refresh-ccw")
 end
-table.sort(npcNames)
 
--- Misc Functions
-local function safeInvokeSpecialDialogue(npcName)
+local function SetToggleKey(key)
+    Config.UIToggleKey = key
+    Window:SetToggleKey(Enum.KeyCode[key])
+    Notify("UI Toggle", "UI toggle key set to " .. key, "keyboard")
+end
+
+local function OpenMerchant(state)
+    Config.MerchantOpen = state
     pcall(function()
-        local index = ReplicatedStorage:FindFirstChild("Packages")
-        if index and index._Index and index._Index["sleitnick_net@0.2.0"] and index._Index["sleitnick_net@0.2.0"].net then
-            index._Index["sleitnick_net@0.2.0"].net["RF/SpecialDialogueEvent"]:InvokeServer(npcName, "TrickOrTreat")
-        end
+        game:GetService("Players").LocalPlayer.PlayerGui.Merchant.Enabled = state
     end)
 end
 
-local function AutoTrickOrTreat()
-    for _, npc in ipairs(game.ReplicatedStorage:WaitForChild("NPC"):GetChildren()) do
-        task.wait(0.25)
-        if npc:IsA("Model") or npc:IsA("Folder") then
-            safeInvokeSpecialDialogue(npc.Name)
-        end
-    end
-    Notify("Auto Trick or Treat", "Auto Trick or Treat successfully completed", "check")
+local function stat(name)
+    local s = leaderstats:FindFirstChild(name)
+    return s and s.Value or "N/A"
 end
 
+local function getLevel()
+    local ok, label = pcall(function()
+        return workspace.Characters[Player.Name].HumanoidRootPart.Overhead.LevelContainer.Label
+    end)
+    if not ok or not label or not label.Text then return 0 end
+    return tonumber(label.Text:match("%d+")) or 0
+end
+
+-- TASK FUNCTIONS
 local function RequestGear(name, state)
     if name == "Oxygen" then
         if state then
@@ -249,66 +284,83 @@ local function RequestGear(name, state)
     end
 end
 
-local function RedeemCode()
-    local codes = { "CRYSTALS", "BLAMETALON", "SORRY" }
-    for _, code in ipairs(codes) do
-        Events.redeemCode:InvokeServer(code)
-        task.wait(0.5)
-        Notify("Redeem Code", "Successfully Redeem Code "..code, "ticket")
-    end
-end
-
-local function simpleSell()
-    local sellSuccess = pcall(function()
-        return Events.sell:InvokeServer()
-    end)
-    if sellSuccess then
-        Notify("Auto Sell", "Successfully sold all items in inventory.", "dollar-sign")
-    else
-        Notify("Auto Sell", "Failed to sell items. Please try again.", "x")
-    end
-end
-
--- Auto Sell Loop
-task.spawn(function()
-    while true do
-        task.wait(Config.AutoSellDelay)
-        if Config.AutoSell then
-            simpleSell()
-        end
-    end
-end)
-
 local function RejoinServer()
     Notify("Rejoining", "Rejoining current server...", "refresh-cw")
     task.wait(0.5)
     game:GetService("TeleportService"):Teleport(game.PlaceId)
 end
 
--- Graphics Functions
+local function AutoIslandTeleport(state)
+    if Config.AlreadyInIsland == true then return end
+    if state then
+        Config.AlreadyInIsland = true
+        Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+    else 
+        Config.AlreadyInIsland = false
+    end
+end
+
+local function ToggleAntiAFK(state)
+    Config.AntiAFK = state
+    local vu = game:GetService("VirtualUser")
+    local player = game.Players.LocalPlayer
+
+    if state == true then
+        Config.AntiAFKConnection = player.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        end)
+    elseif state == false then
+        if Config.AntiAFKConnection then
+            Config.AntiAFKConnection:Disconnect()
+            Config.AntiAFKConnection = nil
+        end
+    end
+end
+
 local function ToggleFPSBoost(state)
     Config.FPSBoost = state
     local Terrain = workspace:FindFirstChildOfClass("Terrain")
-    if state then
+
+    if state == true then
+        -- FPS Boost ON
         pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+
         for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-                pcall(function() v.Enabled = false end)
+            if v:IsA("ParticleEmitter")
+            or v:IsA("Trail")
+            or v:IsA("Smoke")
+            or v:IsA("Fire")
+            or v:IsA("Beam")
+            or v:IsA("Sparkles")
+            or v:IsA("Explosion") then
+
+                if v.Enabled ~= false then
+                    table.insert(Config.DisabledEffects, v)
+                    pcall(function() v.Enabled = false end)
+                end
             end
         end
+
         if Terrain then
             Terrain.WaterWaveSize = 0
             Terrain.WaterWaveSpeed = 0
             Terrain.WaterReflectance = 0
             Terrain.WaterTransparency = 0
         end
-    else
+
+    elseif state == false then
+        -- FPS Boost OFF (restore)
         pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
+
+        for i, v in ipairs(Config.DisabledEffects) do
+            if v and v.Parent then
                 pcall(function() v.Enabled = true end)
             end
         end
+        table.clear(Config.DisabledEffects)
+
         if Terrain then
             Terrain.WaterWaveSize = 0.05
             Terrain.WaterWaveSpeed = 8
@@ -318,49 +370,50 @@ local function ToggleFPSBoost(state)
     end
 end
 
-local AntiAFKConnection
-local function ToggleAntiAFK(state)
-    Config.AntiAFK = state
-    local vu = game:GetService("VirtualUser")
-    local player = game.Players.LocalPlayer
-
-    if state then
-        AntiAFKConnection = player.Idled:Connect(function()
-            vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-            task.wait(1)
-            vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-        end)
-    else
-        if AntiAFKConnection then
-            AntiAFKConnection:Disconnect()
-            AntiAFKConnection = nil
-        end
-    end
-end
-
 local function ToggleLowGraphics(state)
     Config.LowGraphics = state
-    if state then
+
+    if state == true then
+        -- Aktifkan mode low graphics
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("UnionOperation") then
-                pcall(function() v.Material = Enum.Material.SmoothPlastic; v.Reflectance = 0 end)
+                pcall(function()
+                    v.Material = Enum.Material.SmoothPlastic
+                    v.Reflectance = 0
+                end)
             end
-            if v:IsA("Decal") or v:IsA("Texture") then pcall(function() v.Transparency = 1 end) end
+
+            if v:IsA("Decal") or v:IsA("Texture") then
+                if v.Transparency < 1 then
+                    table.insert(Config.HiddenDecals, v)
+                    pcall(function()
+                        v.Transparency = 1
+                    end)
+                end
+            end
         end
-    else
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Decal") or v:IsA("Texture") then pcall(function() v.Transparency = 0 end) end
+    elseif state == false then
+        -- Nonaktifkan mode low graphics (restore decal)
+        for i, v in ipairs(Config.HiddenDecals) do
+            if v and v.Parent then
+                pcall(function()
+                    v.Transparency = 0
+                end)
+            end
         end
+
+        -- Hapus data lama biar gak numpuk
+        table.clear(Config.HiddenDecals)
     end
 end
 
 local blackFrame
 local function Toggle3DRenderingDisable(state)
     Config.Disable3DRendering = state
-    if state then
+    if state == true then
         RunService:Set3dRenderingEnabled(false)
         if not blackFrame then
-            local gui = Instance.new("ScreenGui")
+            local gui = Player:WaitForChild("PlayerGui"):FindFirstChild("BlackoutGui") or Instance.new("ScreenGui")
             gui.Name = "BlackoutGui"
             gui.ResetOnSpawn = false
             gui.IgnoreGuiInset = true
@@ -390,38 +443,108 @@ local function Toggle3DRenderingDisable(state)
         else
             blackFrame.Visible = true
         end
-    else
+    elseif state == false then
         RunService:Set3dRenderingEnabled(true)
         if blackFrame then blackFrame.Visible = false end
     end
 end
 
-local function SetToggleKey(key)
-    Config.UIToggleKey = key
-    Window:SetToggleKey(Enum.KeyCode[key])
-    Notify("UI Toggle", "UI toggle key set to " .. key, "keyboard")
-end
-
-local function OpenMerchant(state)
-    Config.MerchantOpen = state
-    pcall(function()
-        game:GetService("Players").LocalPlayer.PlayerGui.Merchant.Enabled = state
-    end)
-end
-
-local function AutoIslandTeleport(state)
-    if Config.AlreadyInIsland == true then return end
-    if state then
-        Config.AlreadyInIsland = true
-        Modules.Location.TeleportTo("Island", Config.SelectedIsland)
-    else 
-        Config.AlreadyInIsland = false
-    end
-end
 
 -- ====================================================================
 --                        AUTO FISH TASKS
 -- ====================================================================
+
+-- AUTO SYNC CONFIG TASK
+task.spawn(function()
+	while task.wait(0.5) do
+    --[[ GEAR SYNC ]]
+		if not Config.Oxygen then
+			if Config._OxygenActive then
+				Config._OxygenActive = false
+				RequestGear("Oxygen", false)
+			end
+		else
+			if not Config._OxygenActive then
+				Config._OxygenActive = true
+				RequestGear("Oxygen", true)
+			end
+		end
+
+		if not Config.Radar then
+			if Config._RadarActive then
+				Config._RadarActive = false
+				RequestGear("Radar", false)
+			end
+		else
+			if not Config._RadarActive then
+				Config._RadarActive = true
+				RequestGear("Radar", true)
+			end
+		end
+    -- [[ GRAPHICS SETTINGS SYNC ]]
+		if not Config.FPSBoost then
+			if Config._FPSBoostActive then
+				Config._FPSBoostActive = false
+				ToggleFPSBoost(false)
+			end
+		else
+			if not Config._FPSBoostActive then
+				Config._FPSBoostActive = true
+				ToggleFPSBoost(true)
+			end
+		end
+
+		if not Config.LowGraphics then
+			if Config._LowGraphicsActive then
+				Config._LowGraphicsActive = false
+				ToggleLowGraphics(false)
+			end
+		else
+			if not Config._LowGraphicsActive then
+				Config._LowGraphicsActive = true
+				ToggleLowGraphics(true)
+			end
+		end
+
+		if not Config.AntiAFK then
+			if Config._AntiAFKActive then
+				Config._AntiAFKActive = false
+				ToggleAntiAFK(false)
+			end
+		else
+			if not Config._AntiAFKActive then
+				Config._AntiAFKActive = true
+				ToggleAntiAFK(true)
+			end
+		end
+
+		if not Config.Disable3DRendering then
+			if Config._Disable3DRenderingActive then
+				Config._Disable3DRenderingActive = false
+				Toggle3DRenderingDisable(false)
+			end
+		else
+			if not Config._Disable3DRenderingActive then
+				Config._Disable3DRenderingActive = true
+				Toggle3DRenderingDisable(true)
+			end
+		end
+	end
+end)
+
+
+--// AUTO SELL LOOP
+task.spawn(function()
+    while true do
+        task.wait(Config.AutoSellDelay)
+        if Config.AutoSell == true then
+            Events.sell:InvokeServer()
+        end
+    end
+end)
+
+
+--// AUTO FISH V1 LOOPS
 task.spawn(function()
     while task.wait(0.15) do
         if Config.AutoFish then
@@ -431,6 +554,7 @@ task.spawn(function()
     end
 end)
 
+--// AUTO FISH V2 LOOP
 task.spawn(function()
     while task.wait() do
         if Config.AutoFishV2 then
@@ -447,6 +571,7 @@ task.spawn(function()
     end
 end)
 
+--// AUTO TELEPORT TO SAVED SPOT
 task.spawn(function()
     while task.wait(1) do
         if Config.AutoFishSpot and Config.SavedSpot then
@@ -458,14 +583,66 @@ task.spawn(function()
     end
 end)
 
+--// AUTO SYNC PLAYER MOVEMENT SETTINGS
+task.spawn(function()
+	while task.wait(1) do
+
+		if not (Character and Humanoid) then
+			continue -- tunggu respawn
+		end
+
+		-- 🏃 Walk Speed
+		if Humanoid.WalkSpeed ~= Config.WalkSpeed then
+			pcall(function()
+				Modules.Player.SetWalkSpeed(Config.WalkSpeed)
+			end)
+		end
+
+		-- 🦘 Jump Power
+		if Humanoid.UseJumpPower and Humanoid.JumpPower ~= Config.JumpPower then
+			pcall(function()
+				Modules.Player.SetJumpPower(Config.JumpPower)
+			end)
+		end
+
+		-- 🔁 Infinite Jump
+		if Config.InfiniteJump then
+			pcall(function()
+				Modules.Player.ToggleInfiniteJump(true)
+			end)
+		end
+
+		-- 🚫 NoClip
+		if Config.NoClip then
+			pcall(function()
+				Modules.Player.ToggleNoClip(true)
+			end)
+		end
+
+		-- 🌊 Walk on Water
+		if Config.WalkOnWater then
+			pcall(function()
+				Modules.Player.ToggleWalkOnWater(true)
+			end)
+		end
+	end
+end)
+
+
 -- ====================================================================
 --                         MAIN UI INITIALIZATION
 -- ====================================================================
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+WindUI:AddTheme({
+    Name = "Theme_1",
+    Button = Color3.fromHex("#ff7b00"),      
+})
+
 
 local Window = WindUI:CreateWindow({
     Title = GAME,
     Icon = "rbxassetid://112969347193102",
+    Name = "SelenaHUB_UI_Window",
     Author = "Discord.gg/selenaHub",
     Folder = "Selenahub",
     NewElements = true,
@@ -478,7 +655,8 @@ local Window = WindUI:CreateWindow({
     Resizable = true,
     SideBarWidth = 200,
     Background = "rbxassetid://138742999874945",
-    BackgroundImageTransparency = 0.9,
+    BackgroundImageTransparency = 0.95,
+    Theme = "Theme_1",
 })
 
 Window:EditOpenButton({
@@ -496,6 +674,30 @@ Window:EditOpenButton({
 })
 
 Window:Tag({Title = "v" .. VERSION, Icon = "github", Color = Color3.fromHex("#6b31ff")})
+
+-- [[ TOPBAR FIXED ]]
+--[[Window:DisableTopbarButtons({
+    "Close", 
+    "Minimize", 
+    "Fullscreen",
+})
+
+-- Close Button
+Window:CreateTopbarButton("", "rbxassetid://112306250963465", 
+function()
+    for k, v in pairs(DefaultConfig) do
+        Config[k] = typeof(v) == "table" and table.clone(v) or v
+    end
+
+    Window:Destroy()
+end,  998)
+
+-- Minimize Button
+Window:CreateTopbarButton("", "rbxassetid://139823510903269",
+function() 
+    Window:Close()
+end,  997)]]
+
 
 -- ====================================================================
 --                         CONFIG MANAGER SETUP
@@ -521,19 +723,6 @@ end)
 -- ====================================================================
 local AboutTab = Window:Tab({Title = "About", Icon = "info"})
 AboutTab:Select()
-
-local function stat(name)
-    local s = leaderstats:FindFirstChild(name)
-    return s and s.Value or "N/A"
-end
-
-local function getLevel()
-    local ok, label = pcall(function()
-        return workspace.Characters[Player.Name].HumanoidRootPart.Overhead.LevelContainer.Label
-    end)
-    if not ok or not label or not label.Text then return 0 end
-    return tonumber(label.Text:match("%d+")) or 0
-end
 
 local aboutParagraph = AboutTab:Paragraph({
     Title = "Hello, " .. Player.Name .. " 👋",
@@ -577,6 +766,9 @@ AutoFishSection:Toggle({
         Config.AutoFish = state
         if state then
             Events.equip:FireServer(1)
+            Notify("Auto Fish V1", "Auto Fish V1 is now enabled.", "fish")
+        else
+            Notify("Auto Fish V1", "Auto Fish V1 is now disabled.", "fish")
         end
     end
 })
@@ -588,6 +780,11 @@ AutoFishSection:Toggle({
     Default = Config.AutoFishV2,
     Callback = function(state)
         Config.AutoFishV2 = state
+        if state then
+            Notify("Auto Fish V2", "Auto Fish V2 is now enabled.", "fish")
+        else
+            Notify("Auto Fish V2", "Auto Fish V2 is now disabled.", "fish")
+        end
     end
 })
 AutoFishSection:Space()
@@ -615,6 +812,11 @@ AutoSellSection:Toggle({
     Default = Config.AutoSell,
     Callback = function(state)
         Config.AutoSell = state
+        if state then
+            Notify("Auto Sell", "Auto Sell is now enabled.", "rbxassetid://9341850470")
+        else
+            Notify("Auto Sell", "Auto Sell is now disabled.", "rbxassetid://9341850470")
+        end
     end
 })
 AutoSellSection:Space()
@@ -638,17 +840,10 @@ AutoSellSection:Button({
         simpleSell()
     end
 })
+AutoSellSection:Space()
 
 -- EVENT SECTION
 local EventSection = MainTab:Section({Title = "Event", Opened = true})
-EventSection:Button({
-    Flag = "TrickOrTreat",
-    Title = "Auto Trick or Treat",
-    Desc = "Automatically trick or treats",
-    Callback = function()
-        task.spawn(AutoTrickOrTreat)
-    end
-})
 
 -- MISC SECTION
 local MiscSection = MainTab:Section({Title = "Misc", Opened = true})
@@ -660,6 +855,11 @@ MiscSection:Toggle({
     Callback = function(state)
         Config.FishingRadar = state
         RequestGear("Radar", state)
+        if state then
+            Notify("Fishing Radar", "Fishing Radar is now enabled.", "rbxassetid://11903551487")
+        else
+            Notify("Fishing Radar", "Fishing Radar is now disabled.", "rbxassetid://11903551487")
+        end
     end
 })
 MiscSection:Space()
@@ -671,11 +871,17 @@ MiscSection:Toggle({
     Callback = function(state)
         Config.DivingGear = state
         RequestGear("Oxygen", state)
+        if state then
+            Notify("Diving Gear", "Diving Gear is now equipped.", "rbxassetid://16419190627")
+        else
+            Notify("Diving Gear", "Diving Gear is now unequipped.", "rbxassetid://16419190627")
+        end
     end
 })
 MiscSection:Space()
 MiscSection:Button({
     Title = "Redeem All Codes",
+    Icon = "ticket-check",
     Callback = RedeemCode
 })
 
@@ -1002,7 +1208,6 @@ IslandSection:Button({
     end
 })
 
-
 -- GAME EVENT TELEPORT
 local GameEventSection = TeleportTab:Section({Title = "Game Event Teleport", Opened = true})
 GameEventSection:Dropdown({
@@ -1033,7 +1238,7 @@ NPCSection:Dropdown({
     Flag = "SelectedNPCDropdown",
     Title = "Select NPC",
     Values = npcNames,
-    Value = npcNames[1],
+    Value = "None",
     Callback = function(opt)
         Config.SelectedNPC = opt
     end
@@ -1137,19 +1342,6 @@ PositionManagementSection:Button({
 })
 
 -- ====================================================================
---                         EXPLORER TAB
--- ====================================================================
-local ExplorerTab = Window:Tab({Title = "Explorer", Icon = "server"})
-ExplorerTab:Button({
-    Title = "Dex Explorer",
-    Desc = "A powerful game explorer GUI. Shows every instance of the game and all their properties.",
-    Callback = function()
-        Notify("Dex Explorer", "Opening Dex Explorer ui", "check")
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
-    end
-})
-
--- ====================================================================
 --                         SETTINGS TAB
 -- ====================================================================
 local SettingsTab = Window:Tab({Title = "Settings", Icon = "settings"})
@@ -1242,7 +1434,6 @@ ConfigTab:Space()
 ConfigTab:Button({
     Title = "Save Config",
     Icon = "save",
-    Justify = "Center",
     Callback = function()
         Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
         if Window.CurrentConfig:Save() then
@@ -1260,7 +1451,6 @@ ConfigTab:Space()
 ConfigTab:Button({
     Title = "Load Config",
     Icon = "folder",
-    Justify = "Center",
     Callback = function()
         Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
         local success, err = pcall(function()
@@ -1279,7 +1469,6 @@ ConfigTab:Space()
 ConfigTab:Button({
     Title = "Delete Config",
     Icon = "trash",
-    Justify = "Center",
     Callback = function()
         Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
         if Window.CurrentConfig:Delete() then
@@ -1298,10 +1487,13 @@ ConfigTab:Space()
 ConfigTab:Button({
     Title = "Refresh Config List",
     Icon = "refresh-cw",
-    Justify = "Center",
     Callback = function()
         local newConfigs = ConfigManager:AllConfigs()
         ConfigDropdown:SetValues(newConfigs)
         Notify("Refreshed", "Config list refreshed successfully!", "refresh-cw")
     end
 })
+
+Window:OnDestroy(function()
+    Cleanup()
+end)

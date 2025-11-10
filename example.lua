@@ -64,6 +64,7 @@ local Modules = {
 -- ====================================================================
 
 local DefaultConfig = {
+    LockBaseESP = false,
 }
 
 local Config = {}
@@ -351,6 +352,139 @@ DiscordSection:Button({Title = "Copy Discord Link", Icon = "link", Color = Color
 --                         //ANCHOR MAIN TAB
 -- ==================================================================== //tab2
 local MainTab = Window:Tab({Title = "Main", Icon = "house"})
+
+-- ====================================================================
+--                         //ANCHOR VISUAL TAB
+-- ==================================================================== //tab4 //TODO 
+local VisualTab = Window:Tab({Title = "Visual", Icon = "eye"})
+local ESPSection = VisualTab:Section({Title = "ESP", Opened = true})
+
+local function ToggleBaseESP(state)
+    Config.LockBaseESP = state
+
+    if state then
+        Notify("Lock Base ESP", "Enabled Lock Base ESP", "check")
+
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj.Name == "Base" then
+                local laser = obj:FindFirstChild("Lasers")
+                if laser and laser:FindFirstChild("LockTimer") then
+                    local u1 = laser.LockTimer
+
+                    -- pastikan itu BillboardGui atau Highlight
+                    if u1:IsA("BillboardGui") then
+                        u1.Size = UDim2.new(5, 0, 5, 0) -- perbesar 5x
+                        u1.AlwaysOnTop = true
+                        u1.MaxDistance = math.huge
+                    elseif u1:IsA("Highlight") then
+                        u1.FillTransparency = 0.3
+                        u1.OutlineTransparency = 0
+                        u1.FillColor = Color3.new(1, 0.4, 0.4)
+                        u1.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    end
+                end
+            end
+        end
+
+    else
+        Notify("Lock Base ESP", "Disabled Lock Base ESP", "xmark")
+
+        -- reset ke normal
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj.Name == "Base" then
+                local laser = obj:FindFirstChild("Lasers")
+                if laser and laser:FindFirstChild("LockTimer") then
+                    local u1 = laser.LockTimer
+
+                    if u1:IsA("BillboardGui") then
+                        u1.Size = UDim2.new(1, 0, 1, 0)
+                        u1.AlwaysOnTop = false
+                        u1.MaxDistance = 50
+                    elseif u1:IsA("Highlight") then
+                        u1.FillTransparency = 0.6
+                        u1.OutlineTransparency = 0.4
+                        u1.DepthMode = Enum.HighlightDepthMode.Occluded
+                    end
+                end
+            end
+        end
+    end
+end
+
+local ESPPlayers = {}
+
+local function TogglePlayerESP(state)
+    Config.PlayerESP = state
+
+    if state then
+        Notify("Player ESP", "Enabled Player ESP", "eye")
+
+        for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+            if plr ~= game.Players.LocalPlayer then
+                local char = plr.Character or plr.CharacterAdded:Wait()
+                if char then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "PlayerESP"
+                    highlight.Adornee = char
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.FillColor = Color3.fromRGB(100, 200, 255)
+                    highlight.FillTransparency = 0.4
+                    highlight.OutlineTransparency = 0
+                    highlight.Parent = char
+
+                    ESPPlayers[plr] = highlight
+                end
+            end
+        end
+
+        -- Tambahkan ESP saat ada player baru join
+        game.Players.PlayerAdded:Connect(function(plr)
+            if Config.PlayerESP then
+                plr.CharacterAdded:Connect(function(char)
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "PlayerESP"
+                    highlight.Adornee = char
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.FillColor = Color3.fromRGB(255, 0, 255)
+                    highlight.FillTransparency = 0.4
+                    highlight.OutlineTransparency = 0
+                    highlight.Parent = char
+
+                    ESPPlayers[plr] = highlight
+                end)
+            end
+        end)
+
+    else
+        Notify("Player ESP", "Disabled Player ESP", "xmark")
+
+        for plr, esp in pairs(ESPPlayers) do
+            if esp and esp.Parent then
+                esp:Destroy()
+            end
+        end
+        ESPPlayers = {}
+    end
+end
+
+ESPSection:Toggle({
+    Flag = "LockBaseESP",
+    Title = "Lock Base ESP",
+    Default = false,
+    Callback = function(state)
+        ToggleBaseESP(state)
+    end
+})
+ESPSection:Toggle({
+    Flag = "PlayerESP",
+    Title = "Player ESP",
+    Default = false,
+    Callback = function(state)
+        TogglePlayerESP(state)
+    end
+})
+
+
 
 -- ====================================================================
 --                         //ANCHOR PLAYER TAB
