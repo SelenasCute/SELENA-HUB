@@ -64,6 +64,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
 --[[===== MODULES =====]]
     local Modules = {
+        OpenButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Library/OpenButton.lua"))(),
         Player = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Player.lua"))(),
         Location = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Fish%20It/Location.lua"))()
     }
@@ -108,7 +109,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         
         -- Teleport Settings
         AutoTPPosition = false,
-        AutoTPIsland
+        AutoTPIsland = false,
         SelectedPosition = nil,
         SelectedIsland = nil,
         SelectedEvent = nil,
@@ -668,24 +669,10 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
 
     Window:EditOpenButton({
-        Title = "SELENA HUB",
-        Icon = "rbxassetid://112969347193102",
-        CornerRadius = UDim.new(0,16),
-        StrokeThickness = 2,
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),     -- Merah
-            ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 127, 0)),   -- Oranye
-            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),   -- Kuning
-            ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 0)),     -- Hijau
-            ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 0, 255)),     -- Biru
-            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(75, 0, 130)),    -- Indigo
-            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(148, 0, 211)),   -- Ungu
-        }),
-        OnlyMobile = false,
-        Enabled = true,
-        Draggable = true,
+        Enabled = false,
     })
 
+    Modules.OpenButton.Create(Window)
     Window:OnDestroy(function()
         Cleanup()
     end)
