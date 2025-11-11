@@ -650,7 +650,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
     WindUI:AddTheme({
         Name = "Theme_1",
-        Button = Color3.fromHex("#ff7b00"),      
+        Button = Color3.fromHex("#6b31ff"),      
     })
 
 
@@ -665,12 +665,13 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         MinSize = Vector2.new(560, 330),
         MaxSize = Vector2.new(620, 370),
         HideSearchBar = false,
-        Transparent = false,
+        Transparent = true,
         Theme = "Dark",
         Resizable = true,
         SideBarWidth = 200,
-        Background = "rbxassetid://138742999874945",
-        BackgroundImageTransparency = 0.95,
+        BackgroundTransparency = 0.5,
+        --Background = "rbxassetid://138742999874945",
+        --BackgroundImageTransparency = 0.95,
         Theme = "Theme_1",
     })
 
@@ -683,11 +684,11 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Cleanup()
     end)
 
-    Window:Tag({Title = "v" .. VERSION, Icon = "github", Color = Color3.fromHex("#6b31ff")})
+    Window:Tag({Title = "Version" .. VERSION, Color = Color3.fromHex("#6b31ff")})
 --
 
 -- ABOUT TAB
-    local AboutTab = Window:Tab({Title = "About", Icon = "info"})
+    local AboutTab = Window:Tab({Title = "About", Icon = "rbxassetid://127110909372919"})
     AboutTab:Select()
 
     local aboutParagraph = AboutTab:Paragraph({
@@ -719,7 +720,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- MAIN TAB 
-    local MainTab = Window:Tab({Title = "Main", Icon = "house"})
+    local MainTab = Window:Tab({Title = "Main", Icon = "rbxassetid://11234889811"})
 
     -- AUTO FISH SECTION
     local AutoFishSection = MainTab:Section({Title = "Auto Fish", Opened = true})
@@ -852,7 +853,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- PLAYER TAB
-    local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
+    local PlayerTab = Window:Tab({Title = "Player", Icon = "rbxassetid://1921610794"})
 
     local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
     MovementSection:Slider({
@@ -954,7 +955,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
 -- SHOP TAB
 
-    local ShopTab = Window:Tab({Title = "Shop", Icon = "store"})
+    local ShopTab = Window:Tab({Title = "Shop", Icon = "rbxassetid://11108505392"})
 
     local Shop = {
         ["Bait"] = {
@@ -1145,7 +1146,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- TELEPORT TAB
-    local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
+    local TeleportTab = Window:Tab({Title = "Teleport", Icon = "rbxassetid://11480345094"})
 
     -- FISHING ZONE
     local FishingZoneSection = TeleportTab:Section({Title = "Island Teleport", Opened = true})
@@ -1290,7 +1291,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- SETTINGS TAB 
-    local SettingsTab = Window:Tab({Title = "Settings", Icon = "settings"})
+    local SettingsTab = Window:Tab({Title = "Settings", Icon = "rbxassetid://3275025860"})
 
     -- UI SETTINGS
     local UISection = SettingsTab:Section({Title = "UI Settings", Opened = true})
