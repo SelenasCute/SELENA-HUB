@@ -579,15 +579,21 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     --// AUTO TELEPORT TO SAVED Position
     task.spawn(function()
         while task.wait(1) do
-            if Config.AutoTPPosition then
-                if HumanoidRootPart and HumanoidRootPart.CFrame ~= Config.SelectedPosition then
+            if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then
+                continue -- skip loop kalau karakter belum siap
+            end
+
+            local HumanoidRootPart = Player.Character.HumanoidRootPart
+
+            if Config.AutoTPPosition and Config.SelectedPosition then
+                if (HumanoidRootPart.Position - Config.SelectedPosition.Position).Magnitude > 1 then
                     HumanoidRootPart.CFrame = Config.SelectedPosition
                 end
             end
 
-            if Config.AutoTPIsland then
-                if HumanoidRootPart and HumanoidRootPart.CFrame ~= Config.SelectedPosition then
-                    HumanoidRootPart.CFrame = Config.selectedIsland
+            if Config.AutoTPIsland and Config.SelectedIsland then
+                if (HumanoidRootPart.Position - Config.SelectedIsland.Position).Magnitude > 1 then
+                    HumanoidRootPart.CFrame = Config.SelectedIsland
                 end
             end
         end
@@ -1228,7 +1234,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Config.SelectedEvent = opt
         end
     })
-    GameEventSection:Space()
     GameEventSection:Button({
         Title = "Teleport",
         Callback = function()
@@ -1252,7 +1257,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Config.SelectedNPC = opt
         end
     })
-    NPCSection:Space()
     NPCSection:Button({
         Title = "Teleport",
         Callback = function()
@@ -1276,7 +1280,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Config.SelectedPlayer = option
         end
     })
-    PlayerTeleportSection:Space()
     PlayerTeleportSection:Button({
         Flag = "Go_player",
         Title = "Teleport to Selected Player",
@@ -1351,6 +1354,64 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Notify("Server Hop", "Hopping to new server...", "arrow-right-circle")
             local u1 = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
             u1:Teleport(game.PlaceId)
+        end
+    })
+
+    -- CONFIG SETTINGS
+    local ConfigManager = Window.ConfigManager
+    local ConfigName = "default"
+    local AllConfigs = ConfigManager:AllConfigs()
+    local DefaultValue = table.find(AllConfigs, ConfigName) and ConfigName or nil
+
+    local ConfigManagerSection = SettingsTab:Section({ Title = "Config Usage", Opened = true })
+    local ConfigNameInput = ConfigManagerSection:Input({
+        Title = "Config Name",
+        Icon = "file-cog",
+        Callback = function(value)
+            ConfigName = value
+        end
+    })
+
+    ConfigManagerSection:Dropdown({
+        Title = "All Configs",
+        Desc = "Select existing configs",
+        Values = AllConfigs,
+        Value = DefaultValue,
+        Callback = function(value)
+            ConfigName = value
+            ConfigNameInput:Set(value)
+        end
+    })
+    ConfigManagerSection:Space()
+    ConfigManagerSection:Button({
+        Title = "Save Config",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+            if Window.CurrentConfig:Save() then
+                WindUI:Notify({
+                    Title = "Config Saved",
+                    Desc = "Config '" .. ConfigName .. "' saved",
+                    Icon = "check",
+                })
+            end
+        end
+    })
+    ConfigManagerSection:Space()
+    ConfigManagerSection:Button({
+        Title = "Load Config",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+            if Window.CurrentConfig:Load() then
+                WindUI:Notify({
+                    Title = "Config Loaded",
+                    Desc = "Config '" .. ConfigName .. "' loaded",
+                    Icon = "refresh-cw",
+                })
+            end
         end
     })
 
