@@ -34,6 +34,10 @@ function ToggleUI.Create(window)
 	button.AutoButtonColor = true
 	button.Parent = gui
 
+	local uiAspect = Instance.new("UIAspectRatioConstraint")
+	uiAspect.AspectRatio = 1
+	uiAspect.Parent = button
+
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(1, 0)
 	corner.Parent = button
