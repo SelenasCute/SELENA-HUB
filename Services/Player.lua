@@ -2,18 +2,24 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 
 local Config = {
+	-- VISUAL
+	PlayerESPEnabled = false,
+
 	InfiniteJumpEnabled = false,
 	NoClipEnabled = false,
 	FlyEnabled = false,
 	FlySpeed = 50,
 	FlyBodyGyro = nil,
-	FlyBodyVelocity = nil
+	FlyBodyVelocity = nil,
+
+	ESPObjects = {} -- tempat penyimpanan highlight dan tag
 }
 
 --[[ CONNECTIONS ]]
@@ -34,6 +40,87 @@ RunService.Stepped:Connect(function()
 end)
 
 --[[ ALL FUNCTION ]]
+local function CreateESPForPlayer(target)
+	if target == Player then return end
+	local character = target.Character
+	if not character or Config.ESPObjects[target] then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.FillColor = Color3.fromRGB(255, 0, 0)
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.FillTransparency = 0.5
+	highlight.OutlineTransparency = 0
+	highlight.Adornee = character
+	highlight.Parent = character
+
+	local head = character:FindFirstChild("Head")
+	if head then
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "ESPTag"
+		billboard.Size = UDim2.new(0, 200, 0, 50)
+		billboard.StudsOffset = Vector3.new(0, 2, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = head
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.Text = target.Name
+		label.TextColor3 = Color3.fromRGB(255, 0, 0)
+		label.TextStrokeTransparency = 0
+		label.Font = Enum.Font.SourceSansBold
+		label.TextScaled = true
+		label.Parent = billboard
+
+		Config.ESPObjects[target] = {highlight, billboard}
+	end
+end
+
+local function RemoveESPForPlayer(target)
+	if Config.ESPObjects[target] then
+		for _, obj in ipairs(Config.ESPObjects[target]) do
+			if obj and obj.Parent then
+				obj:Destroy()
+			end
+		end
+		Config.ESPObjects[target] = nil
+	end
+end
+
+function TogglePlayerESP(state)
+	Config.PlayerESPEnabled = state
+
+	if state then
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= Player then
+				CreateESPForPlayer(p)
+			end
+		end
+
+		Players.PlayerAdded:Connect(function(p)
+			p.CharacterAdded:Connect(function()
+				if Config.PlayerESPEnabled then
+					task.wait(1)
+					CreateESPForPlayer(p)
+				end
+			end)
+		end)
+
+		Players.PlayerRemoving:Connect(function(p)
+			RemoveESPForPlayer(p)
+		end)
+	else
+		for _, objs in pairs(Config.ESPObjects) do
+			for _, obj in ipairs(objs) do
+				if obj and obj.Parent then
+					obj:Destroy()
+				end
+			end
+		end
+		Config.ESPObjects = {}
+	end
+end
+
 function SetWalkSpeed(value)
 	if Humanoid then Humanoid.WalkSpeed = value end
 end
@@ -118,6 +205,10 @@ Player.CharacterAdded:Connect(function(newChar)
 		task.wait(1)
 		ToggleFly(true)
 	end
+	if Config.PlayerESPEnabled then
+		task.wait(1)
+		TogglePlayerESP(true)
+	end
 end)
 
 return {
@@ -128,4 +219,5 @@ return {
 	OpenFlyGuiMobile = OpenFlyGuiMobile,
 	ToggleInfiniteJump = ToggleInfiniteJump,
 	ToggleNoClip = ToggleNoClip,
+	TogglePlayerESP = TogglePlayerESP
 }
