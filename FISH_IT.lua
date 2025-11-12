@@ -235,6 +235,82 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     -- ====================================================================
     --                        GAME FUNCTIONS
     -- ====================================================================
+    local function ShowQuestUI(name)
+
+        if name == "DeepSeaQuest" then
+            local DeepQuestTEMP = game:GetService("Workspace")["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui
+            if DeepQuestTEMP.Content.Progress.ProgressLabel.Text == "PROGRESS: 100% (Completed 4)" then
+                return Notify("QUEST", "Deep Sea Quest has already been completed.", "rbxassetid://79837430697255", 5)
+            end
+
+            local DeepSeaQuest = game.Players.LocalPlayer.PlayerGui:FindFirstChild("DeepSeaQuest")
+            if not DeepSeaQuest then 
+                DeepSeaQuest = Instance.new("ScreenGui")
+                DeepSeaQuest.Name = "DeepSeaQuest"
+                DeepSeaQuest.Parent = game.Players.LocalPlayer.PlayerGui
+            end
+            
+            for _, child in ipairs(DeepQuestTEMP:GetChildren()) do
+                if not child:IsA("UIPadding") then -- skip layout/UI padding
+                    local clone = child:Clone()
+                    clone.Parent = DeepSeaQuest
+
+                    clone.AnchorPoint = Vector2.new(0.5, 0.5)
+                    clone.Size = UDim2.new(0.5, 0, 0.5, 0)
+                    clone.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    clone.BackgroundTransparency = 0.1
+                    clone.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+
+                    local Close = game:GetService("ReplicatedStorage").Controllers.BackpackController.Hitbox.Close:Clone()                       
+                    Close.Size = UDim2.new(0.1, 0, 0.1, 0)
+                    Close.AnchorPoint = Vector2.new(0.5, 0.5)
+                    Close.Position = UDim2.new(0.745, 0, 0.265, 0)
+                    Close.Parent = DeepSeaQuest
+                    Close.MouseButton1Click:Connect(function()
+                        for _, child in ipairs(DeepSeaQuest:GetChildren()) do
+                            child:Destroy()
+                        end
+                    end)
+                end
+            end
+        elseif name == "ElementQuest" then
+            local ElementQuestTEMP = game:GetService("Workspace")["!!! MENU RINGS"]["Element Tracker"].Board.Gui
+            if ElementQuestTEMP.Content.Progress.ProgressLabel.Text == "PROGRESS: 100% (Completed 4)" then
+                return Notify("Element Quest has already been completed.", "rbxassetid://79837430697255", 5)
+            end
+
+            local ElementQuest = game.Players.LocalPlayer.PlayerGui:FindFirstChild("ElementQuest")
+            if not ElementQuest then 
+                ElementQuest = Instance.new("ScreenGui")
+                ElementQuest.Name = "ElementQuest"
+                ElementQuest.Parent = game.Players.LocalPlayer.PlayerGui
+            end
+
+            for _, child in ipairs(ElementQuestTEMP:GetChildren()) do
+                if not child:IsA("UIPadding") then -- skip layout/UI padding
+                    local clone = child:Clone()
+                    clone.Parent = ElementQuest
+
+                    clone.AnchorPoint = Vector2.new(0.5, 0.5)
+                    clone.Size = UDim2.new(0.5, 0, 0.5, 0)
+                    clone.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    clone.BackgroundTransparency = 0.1
+                    clone.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+
+                    local Close = game:GetService("ReplicatedStorage").Controllers.BackpackController.Hitbox.Close:Clone()                       
+                    Close.Size = UDim2.new(0.1, 0, 0.1, 0)
+                    Close.AnchorPoint = Vector2.new(0.5, 0.5)
+                    Close.Position = UDim2.new(0.745, 0, 0.265, 0)
+                    Close.Parent = ElementQuest
+                    Close.MouseButton1Click:Connect(function()
+                        for _, child in ipairs(ElementQuest:GetChildren()) do
+                            child:Destroy()
+                        end
+                    end)
+                end
+            end
+        end
+    end 
 
     -- SINGLE FUNCTION
     local function RedeemCode()
@@ -684,7 +760,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Cleanup()
     end)
 
-    Window:Tag({Title = "Version" .. VERSION, Color = Color3.fromHex("#6b31ff")})
+    Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
 --
 
 -- ABOUT TAB
@@ -850,6 +926,29 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Icon = "ticket-check",
         Callback = RedeemCode
     })
+--
+
+-- QUEST TAB
+    local QuestTAB = Window:Tab({Title = "Quest", Icon = "rbxassetid://79837430697255"})
+
+    QuestTAB:Section({Title = "Quest Proggress", Opened = true})
+    QuestTAB:Button({
+        Title = "Check Deep Sea Quest Proggress",
+        Icon = "rbxassetid://116644397704032",
+        Desc = "Reward: Ghostfin Rod",
+        Callback = function() 
+            ShowQuestUI("DeepSeaQuest")
+        end
+    })
+    QuestTAB:Button({
+        Title = "Check Element Quest Proggress",
+        Icon = "rbxassetid://99867965187788",
+        Desc = "Reward: Element Rod",
+        Callback = function() 
+            ShowQuestUI("ElementQuest")
+        end
+    })
+
 --
 
 -- PLAYER TAB
