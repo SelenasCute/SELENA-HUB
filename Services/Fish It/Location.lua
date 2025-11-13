@@ -23,7 +23,6 @@ LocationModule.LOCATIONS = {
         ["Coral Reefs"] = CFrame.new(-3114.78198, 1.32066584, 2237.52295),
         ["Esoteric Depths"] = CFrame.new(3248.37109, -1301.53027, 1403.82727),
         ["Crater Island"] = CFrame.new(1016.49072, 20.0919304, 5069.27295),
-        ["Lost Isle"] = CFrame.new(-3618.15698, 240.836655, -1317.45801),
         ["Weather Machine"] = CFrame.new(-1488.51196, 83.1732635, 1876.30298),
         ["Tropical Grove"] = CFrame.new(-2095.34106, 197.199997, 3718.08008),
         ["Mount Hallow"] = CFrame.new(2136.62305, 78.9163895, 3272.50439),
