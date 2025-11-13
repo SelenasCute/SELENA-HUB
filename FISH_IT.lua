@@ -103,15 +103,16 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         -- Shop Settings
         SelectedRod = nil,
         SelectedBait = nil,
-        SelectedWeather = nil,
+        SelectedWeather = {},
         SelectedBoat = nil,
         MerchantOpen = false,
         
         -- Teleport Settings
         AutoTPPosition = false,
-        AutoTPIsland = false,
+        AutoTPSpot = false,
         SelectedPosition = nil,
-        SelectedIsland = nil,
+        SelectedIsland = nil,        
+        SelectedSpot = nil,
         SelectedEvent = nil,
         SelectedNPC = nil,
         SelectedPlayer = nil,
@@ -125,11 +126,17 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     for k, v in pairs(DefaultConfig) do Config[k] = v end
 
     -- Location Lists
-    local islandNames = {}
+    local IslandNames = {}
     for name in pairs(Modules.Location.LOCATIONS["Island"]) do
-        table.insert(islandNames, name)
+        table.insert(IslandNames, name)
     end
-    table.sort(islandNames)
+    table.sort(IslandNames)
+
+    local SpotNames = {}
+    for name in pairs(Modules.Location.LOCATIONS["Spot"]) do
+        table.insert(SpotNames, name)
+    end
+    table.sort(SpotNames)
 
     local eventNames = {}
     for name in pairs(Modules.Location.LOCATIONS["GameEvent"]) do
@@ -314,18 +321,12 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
     -- SINGLE FUNCTION
     local function RedeemCode()
-        local codes = { "CRYSTALS", "BLAMETALON", "SORRY" }
+        local codes = { "WORMHYPE","PURPLEMOON","CRYSTALS", "BLAMETALON", "SORRY" }
         for _, code in ipairs(codes) do
             Events.redeemCode:InvokeServer(code)
             task.wait(0.5)
             Notify("Redeem Code", "Successfully Redeem Code "..code, "ticket")
         end
-    end
-
-    local function RefreshPlayersDropdown(dropdown)
-        local newList = GetAllPlayerNames()
-        dropdown:SetValues(newList)
-        Notify("Refresh player list", "Successfully Refreshed player list", "refresh-ccw")
     end
 
     local function SetToggleKey(key)
@@ -373,13 +374,13 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         game:GetService("TeleportService"):Teleport(game.PlaceId)
     end
 
-    local function AutoIslandTeleport(state)
-        if Config.AlreadyInIsland == true then return end
+    local function AutoSpotTeleport(state)
+        if Config.AlreadyInSpot == true then return end
         if state then
-            Config.AlreadyInIsland = true
-            Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+            Config.AlreadyInSpot = true
+            Modules.Location.TeleportTo("Spot", Config.SelectedSpot)
         else 
-            Config.AlreadyInIsland = false
+            Config.AlreadyInSpot = false
         end
     end
 
@@ -535,6 +536,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 --[[===== MAIN TASKS =====]]
+
     -- AUTO SYNC CONFIG TASK
     task.spawn(function()
         while task.wait(0.5) do
@@ -667,9 +669,9 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
                 end
             end
 
-            if Config.AutoTPIsland and Config.SelectedIsland then
-                if (HumanoidRootPart.Position - Config.SelectedIsland.Position).Magnitude > 1 then
-                    HumanoidRootPart.CFrame = Config.SelectedIsland
+            if Config.AutoTPSpot and Config.SelectedSpot then
+                if (HumanoidRootPart.Position - Config.SelectedSpot.Position).Magnitude > 1 then
+                    HumanoidRootPart.CFrame = Config.SelectedSpot
                 end
             end
         end
@@ -792,7 +794,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Notify("Discord Link", "Link copied to clipboard!", "link")
         end
     })
-
 --
 
 -- MAIN TAB 
@@ -1016,13 +1017,13 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
 
     local FlySection = PlayerTab:Section({Title = "Fly", Opened = true})
-    FlySection:Toggle({
-        Flag = "Fly",
+    FlySection:Keybind({
         Title = "Toggle Fly",
-        Default = Config.Fly,
-        Callback = function(state)
-            Config.Fly = state
-            Modules.Player.ToggleFly(state)
+        Desc = "Keybind to toggle Fly",
+        Value = Config.Fly,
+        Callback = function(key)
+            Config.Fly = key
+            print(key)
         end
     })
     FlySection:Space()
@@ -1121,7 +1122,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Flag = "SelectedRodDropdown",
         Title = "Select Rod",
         Values = rodList,
-        Value = rodList[1],
+        Value = "None",
         Callback = function(option)
             Config.SelectedRod = option
         end
@@ -1153,7 +1154,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Flag = "SelectedBaitDropdown",
         Title = "Select Bait",
         Values = baitList,
-        Value = baitList[1],
+        Value = "None",
         Callback = function(option)
             Config.SelectedBait = option
         end
@@ -1185,7 +1186,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Flag = "SelectedWeatherDropdown",
         Title = "Select Weather",
         Values = weatherlist,
-        Value = weatherlist[1],
+        Value = {},
+        Multi = true,
         Callback = function(option)
             Config.SelectedWeather = option
         end
@@ -1194,9 +1196,17 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     BuyWeatherSection:Button({
         Title = "Buy Selected Weather",
         Callback = function()
-            if not Config.SelectedWeather then return end
-            Events.buyweather:InvokeServer(Config.SelectedWeather.Id)
-            Notify("Purchase Weather", "Purchased " .. Config.SelectedWeather.Title, "shopping-cart")
+            if not Config.SelectedWeather or #Config.SelectedWeather == 0 then
+                Notify("Error", "Please select at least one weather!", "x")
+                return
+            end
+            
+            -- Loop untuk membeli setiap weather yang dipilih
+            for _, weather in ipairs(Config.SelectedWeather) do
+                Events.buyweather:InvokeServer(weather.Id)
+                Notify("Purchase Weather", "Purchased " .. weather.Title, "shopping-cart")
+                task.wait(0.5) -- Delay untuk menghindari spam
+            end
         end
     })
 
@@ -1248,24 +1258,25 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     local TeleportTab = Window:Tab({Title = "Teleport", Icon = "rbxassetid://11480345094"})
 
     -- FISHING ZONE
-    local FishingZoneSection = TeleportTab:Section({Title = "Island Teleport", Opened = true})
-    FishingZoneSection:Dropdown({ Flag = "SelectedIslandDropdown",
-        Title = "Select Fishing zone",
-        Desc = "Select Fishing zone to Teleport to",
-        Values = islandNames,
-        Value = islandNames[1],
+    local FishingZoneSection = TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport", Opened = true})
+
+    FishingZoneSection:Dropdown({ Flag = "SelectedSpotDropdown",
+        Title = "Select Fishing Spots",
+        Desc = "Select Fishing Spots to Teleport to",
+        Values = SpotNames,
+        Value = SpotNames[1],
         Callback = function(opt)
-            Config.SelectedIsland = opt
+            Config.SelectedSpot = opt
         end
     })
     FishingZoneSection:Button({
-        Title = "Teleport to Selected Zone",
+        Title = "Teleport to Selected Spots",
         Icon = "",
         Justify = "Center",
         Callback = function()
-            local success, err = Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+            local success, err = Modules.Location.TeleportTo("Spot", Config.SelectedSpot)
             if success then
-                Notify("Teleport", "Teleported to " .. Config.SelectedIsland .. " (Island)", "map-pin")
+                Notify("Teleport", "Teleported to " .. Config.SelectedSpot .. " (Spot)", "map-pin")
             else
                 Notify("Teleport Failed", err, "x")
             end
@@ -1276,8 +1287,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Icon = "save",
         Justify = "Center",
         Callback = function()
-            Notify("Position Saved", "Current position saved for island teleport.", "check")
-            print("Saved Position:", HumanoidRootPart.CFrame)
+            Notify("Position Saved", "Current position saved for Spot teleport.", "check")
             Config.SelectedPosition = HumanoidRootPart.CFrame   
         end
     })
@@ -1296,11 +1306,11 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
     FishingZoneSection:Space()
     FishingZoneSection:Toggle({
-        Flag = "Teleport & Freeze at Selected Zone",
-        Title = "Teleport & Freeze at Selected Zone",
-        Default = Config.SelectedIsland,
+        Flag = "Teleport & Freeze at Selected Spot",
+        Title = "Teleport & Freeze at Selected Spot",
+        Default = Config.SelectedSpot,
         Callback = function(state)
-            Config.AutoTPIsland = state
+            Config.AutoTPSpot = state
             if state then
                 Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
             else
@@ -1319,6 +1329,31 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
                 Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
             else
                 Notify("Teleport", "Auto Teleport to Saved Position is now disabled.", "map-pin")
+            end
+        end
+    })
+
+    -- ISLAND
+    local IslandTeleportSection = TeleportTab:Section({Title = "Teleport To Island", Opened = true})
+    IslandTeleportSection:Dropdown({ Flag = "IslandTP",
+        Title = "Select Island",
+        Values = IslandNames,
+        Value = IslandNames[1],
+        Callback = function(opt)
+            Config.SelectedIsland = opt
+        end
+    })
+    IslandTeleportSection:Space()
+    IslandTeleportSection:Button({
+        Title = "Teleport to Selected Island",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            local success, err = Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+            if success then
+                Notify("Teleport", "Teleported to " .. Config.SelectedIsland .. " (Island)", "map-pin")
+            else
+                Notify("Teleport Failed", err, "x")
             end
         end
     })
@@ -1380,6 +1415,16 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Config.SelectedPlayer = option
         end
     })
+
+    PlayerTeleportSection:Button({
+        Flag = "Refrest_player",
+        Title = "Refresh Player list",
+        Callback = function()
+            PlayerTeleport_1:Refresh(GetAllPlayerNames())
+            Notify("Refresh Player List","Successfully Refresh player list")
+        end
+    })
+
     PlayerTeleportSection:Button({
         Flag = "Go_player",
         Title = "Teleport to Selected Player",
@@ -1518,12 +1563,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 --[[===== FINALIZE =====]]
-Players.PlayerAdded:Connect(function()
-    RefreshPlayersDropdown(PlayerTeleport_1)
-end)
-Players.PlayerRemoving:Connect(function()
-    RefreshPlayersDropdown(PlayerTeleport_1)
-end)
 
 print("────────────────────────────")
 print("💉 Selena HUB Executed Successfully")
