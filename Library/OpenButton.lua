@@ -39,7 +39,7 @@ function ToggleUI.Create(window)
 	uiAspect.Parent = button
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
+	corner.CornerRadius = UDim.new(0.5, 0)
 	corner.Parent = button
 
 	local stroke = Instance.new("UIStroke")
@@ -120,7 +120,6 @@ function ToggleUI.Create(window)
 	-- Hubungkan dengan event window
 	if window.OnOpen then
 		window:OnOpen(function()
-			gui.Enabled = false
 			hover.Visible = false
 		end)
 	end
