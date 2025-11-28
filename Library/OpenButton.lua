@@ -54,7 +54,7 @@ function ToggleUI.Create(window)
 	hover.Position = UDim2.new(-1.775, 0,-0.497, 0)
 	hover.Size = UDim2.new(2.775, 0,0.619, 0)
 	hover.BackgroundTransparency = 1
-	hover.Text = "Open Selena HUB"
+	hover.Text = "Selena HUB"
 	hover.TextScaled = true
 	hover.TextXAlignment = Enum.TextXAlignment.Right
 	hover.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
