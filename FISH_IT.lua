@@ -841,11 +841,11 @@ local LOGO = "rbxassetid://140413750237602"
         MinSize = Vector2.new(560, 330),
         MaxSize = Vector2.new(620, 370),
         HideSearchBar = false,
-        Transparent = true,
+        Transparent = false,
         Theme = "Dark",
         Resizable = true,
         SideBarWidth = 200,
-        BackgroundTransparency = 0.3,
+        --BackgroundTransparency = 0.,
         --Background = "rbxassetid://138742999874945",
         --BackgroundImageTransparency = 0.95,
         Theme = "Theme_1",
@@ -929,157 +929,98 @@ local LOGO = "rbxassetid://140413750237602"
 -- MAIN TAB 
     local MainTab = Window:Tab({Title = "Main", Icon = "landmark"})
 
-    -- AUTO FISH SECTION
-    local AutoFishSection = MainTab:Section({Title = "Auto Fish"})
-    AutoFishSection:Toggle({
-        Flag = "AutoFishv1",
-        Title = "Auto Fish V1",
-        Desc = "Automatically farms fishing while enable",
-        Default = Config.AutoFish,
-        Callback = function(state)
-            Config.AutoFish = state
-            if state then
-                Events.equip:FireServer(1)
-                Notify("Auto Fish V1", "Auto Fish V1 is now enabled.", "fish")
-            else
-                Notify("Auto Fish V1", "Auto Fish V1 is now disabled.", "fish")
+    -- ==> [[ AUTO FISH SECTION
+        MainTab:Section({Title = "Auto Fish"})
+        MainTab:Toggle({
+            Flag = "AutoFishv1",
+            Title = "Auto Fish V1",
+            Desc = "Automatically farms fishing while enable",
+            Default = Config.AutoFish,
+            Callback = function(state)
+                Config.AutoFish = state
+                if state then
+                    Events.equip:FireServer(1)
+                    Notify("Auto Fish V1", "Auto Fish V1 is now enabled.", "fish")
+                else
+                    Notify("Auto Fish V1", "Auto Fish V1 is now disabled.", "fish")
+                end
             end
-        end
-    })
-    AutoFishSection:Space()
-    AutoFishSection:Toggle({
-        Flag = "AutoFishv2",
-        Title = "Auto Fish V2",
-        Desc = "Better Auto Fish, Delay Suggestion:\nAstral: 2",
-        Default = Config.AutoFishV2,
-        Callback = function(state)
-            Config.AutoFishV2 = state
-            if state then
-                Notify("Auto Fish V2", "Auto Fish V2 is now enabled.", "fish")
-            else
-                Notify("Auto Fish V2", "Auto Fish V2 is now disabled.", "fish")
+        })
+        MainTab:Space()
+        MainTab:Toggle({
+            Flag = "AutoFishv2",
+            Title = "Auto Fish V2",
+            Desc = "Better Auto Fish, Delay Suggestion:\nAstral: 2",
+            Default = Config.AutoFishV2,
+            Callback = function(state)
+                Config.AutoFishV2 = state
+                if state then
+                    Notify("Auto Fish V2", "Auto Fish V2 is now enabled.", "fish")
+                else
+                    Notify("Auto Fish V2", "Auto Fish V2 is now disabled.", "fish")
+                end
             end
-        end
-    })
-    AutoFishSection:Space()
-    AutoFishSection:Slider({
-        Flag = "AutoFishV2DelaySlider",
-        Title = "Auto Fish V2 Delay",
-        Step = 0.1,
-        Value = {
-            Min = 0.1,
-            Max = 10,
-            Default = Config.AutoFishV2Delay
-        },
-        Callback = function(value)
-            Config.AutoFishV2Delay = value
-        end
-    })
-
-    -- AUTO SELL SECTION
-    local AutoSellSection = MainTab:Section({Title = "Auto Sell"})
-    AutoSellSection:Toggle({
-        Flag = "AutoSellInventory",
-        Title = "Auto Sell Inventory",
-        Desc = "Automatically sell your inventory while enable",
-        Default = Config.AutoSell,
-        Callback = function(state)
-            Config.AutoSell = state
-            if state then
-                Notify("Auto Sell", "Auto Sell is now enabled.", "rbxassetid://9341850470")
-            else
-                Notify("Auto Sell", "Auto Sell is now disabled.", "rbxassetid://9341850470")
+        })
+        MainTab:Space()
+        MainTab:Slider({
+            Flag = "AutoFishV2DelaySlider",
+            Title = "Auto Fish V2 Delay",
+            Step = 0.1,
+            Value = {
+                Min = 0.1,
+                Max = 10,
+                Default = Config.AutoFishV2Delay
+            },
+            Callback = function(value)
+                Config.AutoFishV2Delay = value
             end
-        end
-    })
-    AutoSellSection:Space()
-    AutoSellSection:Slider({
-        Flag = "SellDelay",
-        Title = "Sell Delay",
-        Step = 1,
-        Value = {
-            Min = 1,
-            Max = 200,
-            Default = Config.AutoSellDelay
-        },
-        Callback = function(value)
-            Config.AutoSellDelay = value
-        end
-    })
-    AutoSellSection:Space()
-    AutoSellSection:Button({
-        Title = "Auto Sell Once",
-        Callback = function()
-            Events.sell:InvokeServer()
-        end
-    })
-    AutoSellSection:Space()
-
-    -- EVENT SECTION
-    local EventSection = MainTab:Section({Title = "Event"})
-
-    -- MISC SECTION
-    local MiscSection = MainTab:Section({Title = "Misc"})
-    MiscSection:Toggle({
-        Flag = "FishingRadar",
-        Title = "Fishing Radar",
-        Desc = "Turns the fishing radar ON or OFF",
-        Default = Config.FishingRadar,
-        Callback = function(state)
-            Config.FishingRadar = state
-            RequestGear("Radar", state)
-            if state then
-                Notify("Fishing Radar", "Fishing Radar is now enabled.", "rbxassetid://11903551487")
-            else
-                Notify("Fishing Radar", "Fishing Radar is now disabled.", "rbxassetid://11903551487")
+        })
+    -- ==> ]] 
+    
+    -- ==> [[ AUTO SELL SECTION
+        MainTab:Section({Title = "Auto Sell"})
+        MainTab:Toggle({
+            Flag = "AutoSellInventory",
+            Title = "Auto Sell Inventory",
+            Desc = "Automatically sell your inventory while enable",
+            Default = Config.AutoSell,
+            Callback = function(state)
+                Config.AutoSell = state
+                if state then
+                    Notify("Auto Sell", "Auto Sell is now enabled.", "rbxassetid://9341850470")
+                else
+                    Notify("Auto Sell", "Auto Sell is now disabled.", "rbxassetid://9341850470")
+                end
             end
-        end
-    })
-    MiscSection:Space()
-    MiscSection:Toggle({
-        Flag = "DivingGear",
-        Title = "Diving Gear",
-        Desc = "Equip or Unequips Diving Gear",
-        Default = Config.DivingGear,
-        Callback = function(state)
-            Config.DivingGear = state
-            RequestGear("Oxygen", state)
-            if state then
-                Notify("Diving Gear", "Diving Gear is now equipped.", "rbxassetid://16419190627")
-            else
-                Notify("Diving Gear", "Diving Gear is now unequipped.", "rbxassetid://16419190627")
+        })
+        MainTab:Space()
+        MainTab:Slider({
+            Flag = "SellDelay",
+            Title = "Sell Delay",
+            Step = 1,
+            Value = {
+                Min = 1,
+                Max = 200,
+                Default = Config.AutoSellDelay
+            },
+            Callback = function(value)
+                Config.AutoSellDelay = value
             end
-        end
-    })
-    MiscSection:Space()
-    MiscSection:Button({
-        Title = "Redeem All Codes",
-        Icon = "ticket-check",
-        Callback = RedeemCode
-    })
---
+        })
+        MainTab:Space()
+        MainTab:Button({
+            Title = "Auto Sell Once",
+            Callback = function()
+                Events.sell:InvokeServer()
+            end
+        })
+        MainTab:Space()
 
--- QUEST TAB
-    local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
-
-    QuestTAB:Section({Title = "Quest Proggress"})
-    QuestTAB:Button({
-        Title = "Check Deep Sea Quest Proggress",
-        Icon = "rbxassetid://116644397704032",
-        Desc = "Reward: Ghostfin Rod",
-        Callback = function() 
-            ShowQuestUI("DeepSeaQuest")
-        end
-    })
-    QuestTAB:Button({
-        Title = "Check Element Quest Proggress",
-        Icon = "rbxassetid://99867965187788",
-        Desc = "Reward: Element Rod",
-        Callback = function() 
-            ShowQuestUI("ElementQuest")
-        end
-    })
-
+    -- ==> ]]
+    
+    -- ==> [[ EVENT SECTION
+        local EventSection = MainTab:Section({Title = "Event"})
+    -- ==> ]]
 --
 
 -- PLAYER TAB
@@ -1202,7 +1143,6 @@ local LOGO = "rbxassetid://140413750237602"
         end
     })    
     PlayerTab:Space()
-
     PlayerTab:Toggle({
         Title = "Hide All Username (Streamer Mode)",
         Value = Config.HideAllUsername,
@@ -1211,6 +1151,41 @@ local LOGO = "rbxassetid://140413750237602"
             HideAllUsernames(state)
         end
     })
+    PlayerTab:Space()
+    PlayerTab:Button({
+        Title = "Reset Player In Place",
+        Callback = function(state)
+            local savedPos = HumanoidRootPart.CFrame
+            Humanoid.Health = 0
+            newChar = Player.CharacterAdded:Wait()
+            newHRP = newChar:WaitForChild("HumanoidRootPart")
+            newHRP.CFrame = savedPos
+
+        end
+    })
+--
+
+-- QUEST TAB
+    local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
+
+    QuestTAB:Section({Title = "Quest Proggress"})
+    QuestTAB:Button({
+        Title = "Check Deep Sea Quest Proggress",
+        Icon = "rbxassetid://116644397704032",
+        Desc = "Reward: Ghostfin Rod",
+        Callback = function() 
+            ShowQuestUI("DeepSeaQuest")
+        end
+    })
+    QuestTAB:Button({
+        Title = "Check Element Quest Proggress",
+        Icon = "rbxassetid://99867965187788",
+        Desc = "Reward: Element Rod",
+        Callback = function() 
+            ShowQuestUI("ElementQuest")
+        end
+    })
+
 --
 
 -- SHOP TAB
@@ -1504,226 +1479,271 @@ local LOGO = "rbxassetid://140413750237602"
 -- TELEPORT TAB
     local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
 
-    -- FISHING ZONE
-    local FishingZoneSection = TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport"})
-
-    FishingZoneSection:Dropdown({ Flag = "SelectedSpotDropdown",
-        Title = "Select Fishing Spots",
-        Desc = "Select Fishing Spots to Teleport to",
-        Values = SpotNames,
-        Value = SpotNames[1],
-        Callback = function(opt)
-            Config.SelectedSpot = opt
-        end
-    })
-    FishingZoneSection:Button({
-        Title = "Teleport to Selected Spots",
-        Icon = "",
-        Justify = "Center",
-        Callback = function()
-            local success, err = Modules.Location.TeleportTo("Spot", Config.SelectedSpot)
-            if success then
-                Notify("Teleport", "Teleported to " .. Config.SelectedSpot .. " (Spot)", "map-pin")
-            else
-                Notify("Teleport Failed", err, "x")
+    -- ==> [[ FISHING ZONE
+        TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport"})
+        TeleportTab:Dropdown({ Flag = "SelectedSpotDropdown",
+            Title = "Select Fishing Spots",
+            Desc = "Select Fishing Spots to Teleport to",
+            Values = SpotNames,
+            Value = SpotNames[1],
+            Callback = function(opt)
+                Config.SelectedSpot = opt
             end
-        end
-    })
-    FishingZoneSection:Button({
-        Title = "Save Current Position",
-        Icon = "save",
-        Justify = "Center",
-        Callback = function()
-            Notify("Position Saved", "Current position saved for Spot teleport.", "check")
-            Config.SelectedPosition = HumanoidRootPart.CFrame   
-        end
-    })
-    FishingZoneSection:Button({
-        Title = "Teleport to Saved Position",
-        Icon = "mouse-pointer-click",
-        Justify = "Center",
-        Callback = function()
-            if not Config.SelectedPosition then
-                Notify("Teleport Failed", "No saved position found. Please save a position first.", "x")
-                return
+        })
+        TeleportTab:Button({
+            Title = "Teleport to Selected Spots",
+            Icon = "",
+            Justify = "Center",
+            Callback = function()
+                local success, err = Modules.Location.TeleportTo("Spot", Config.SelectedSpot)
+                if success then
+                    Notify("Teleport", "Teleported to " .. Config.SelectedSpot .. " (Spot)", "map-pin")
+                else
+                    Notify("Teleport Failed", err, "x")
+                end
             end
-            local hrp = GetHumanoidRootPart()
-            if hrp then
-                hrp.CFrame = Config.SelectedPosition
-                Notify("Teleport", "Teleported to saved position.", "map-pin")
-            else
-                Notify("Teleport Failed", "Character not found!", "x")
+        })
+        TeleportTab:Button({
+            Title = "Save Current Position",
+            Icon = "save",
+            Justify = "Center",
+            Callback = function()
+                Notify("Position Saved", "Current position saved for Spot teleport.", "check")
+                Config.SelectedPosition = HumanoidRootPart.CFrame   
             end
-        end
-    })
-    FishingZoneSection:Space()
-    FishingZoneSection:Toggle({
-        Flag = "Teleport & Freeze at Selected Spot",
-        Title = "Teleport & Freeze at Selected Spot",
-        Default = Config.AutoTPSpot,
-        Callback = function(state)
-            Config.AutoTPSpot = state
-            if state then
-                Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
-            else
-                Notify("Teleport", "Auto Teleport to Saved Position is now disabled.", "map-pin")
+        })
+        TeleportTab:Button({
+            Title = "Teleport to Saved Position",
+            Icon = "mouse-pointer-click",
+            Justify = "Center",
+            Callback = function()
+                if not Config.SelectedPosition then
+                    Notify("Teleport Failed", "No saved position found. Please save a position first.", "x")
+                    return
+                end
+                local hrp = GetHumanoidRootPart()
+                if hrp then
+                    hrp.CFrame = Config.SelectedPosition
+                    Notify("Teleport", "Teleported to saved position.", "map-pin")
+                else
+                    Notify("Teleport Failed", "Character not found!", "x")
+                end
             end
-        end
-    })
-    FishingZoneSection:Space()
-    FishingZoneSection:Toggle({
-        Flag = "Teleport & Freeze at Saved Position",
-        Title = "Auto Teleport to Saved Position",
-        Default = Config.AutoTPPosition,
-        Callback = function(state)
-
-            Config.AutoTPPosition = state
-            if state then
-                Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
-            else
-                Notify("Teleport", "Auto Teleport to Saved Position is now disabled.", "map-pin")
+        })
+        TeleportTab:Space()
+        TeleportTab:Toggle({
+            Flag = "Teleport & Freeze at Selected Spot",
+            Title = "Teleport & Freeze at Selected Spot",
+            Default = Config.AutoTPSpot,
+            Callback = function(state)
+                Config.AutoTPSpot = state
+                if state then
+                    Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
+                else
+                    Notify("Teleport", "Auto Teleport to Saved Position is now disabled.", "map-pin")
+                end
             end
-        end
-    })
+        })
+        TeleportTab:Space()
+        TeleportTab:Toggle({
+            Flag = "Teleport & Freeze at Saved Position",
+            Title = "Auto Teleport to Saved Position",
+            Default = Config.AutoTPPosition,
+            Callback = function(state)
 
-    -- ISLAND
-    local IslandTeleportSection = TeleportTab:Section({Title = "Teleport To Island"})
-    IslandTeleportSection:Dropdown({ Flag = "IslandTP",
-        Title = "Select Island",
-        Values = IslandNames,
-        Value = IslandNames[1],
-        Callback = function(opt)
-            Config.SelectedIsland = opt
-        end
-    })
-    IslandTeleportSection:Button({
-        Title = "Teleport to Selected Island",
-        Icon = "",
-        Justify = "Center",
-        Callback = function()
-            local success, err = Modules.Location.TeleportTo("Island", Config.SelectedIsland)
-            if success then
-                Notify("Teleport", "Teleported to " .. Config.SelectedIsland .. " (Island)", "map-pin")
-            else
-                Notify("Teleport Failed", err, "x")
+                Config.AutoTPPosition = state
+                if state then
+                    Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
+                else
+                    Notify("Teleport", "Auto Teleport to Saved Position is now disabled.", "map-pin")
+                end
             end
-        end
-    })
+        })
+    -- ==> ]]
 
-    -- GAME EVENT TELEPORT
-    local GameEventSection = TeleportTab:Section({Title = "Game Event Teleport"})
-    GameEventSection:Dropdown({
-        Flag = "SelectedEventDropdown",
-        Title = "Select Game Event",
-        Values = eventNames,
-        Value = eventNames[1],
-        Callback = function(opt)
-            Config.SelectedEvent = opt
-        end
-    })
-    GameEventSection:Button({
-        Title = "Teleport",
-        Callback = function()
-            local success, err = Modules.Location.TeleportTo("GameEvent", Config.SelectedEvent)
-            if success then
-                Notify("Teleport", "Teleported to " .. Config.SelectedEvent .. " (Game Event)", "map-pin")
-            else
-                Notify("Teleport Failed", err, "x")
+
+    -- ==> [[ ISLAND
+        TeleportTab:Section({Title = "Teleport To Island"})
+        TeleportTab:Dropdown({ Flag = "IslandTP",
+            Title = "Select Island",
+            Values = IslandNames,
+            Value = IslandNames[1],
+            Callback = function(opt)
+                Config.SelectedIsland = opt
             end
-        end
-    })
-
-    -- NPC TELEPORT
-    local NPCSection = TeleportTab:Section({Title = "NPC Teleport"})
-    NPCSection:Dropdown({
-        Flag = "SelectedNPCDropdown",
-        Title = "Select NPC",
-        Values = npcNames,
-        Value = "None",
-        Callback = function(opt)
-            Config.SelectedNPC = opt
-        end
-    })
-    NPCSection:Button({
-        Title = "Teleport",
-        Callback = function()
-            local success, err = Modules.Location.TeleportTo("NPC", Config.SelectedNPC)
-            if success then
-                Notify("Teleport", "Teleported to " .. Config.SelectedNPC .. " (NPC)", "map-pin")
-            else
-                Notify("Teleport Failed", err, "x")
+        })
+        TeleportTab:Button({
+            Title = "Teleport to Selected Island",
+            Icon = "",
+            Justify = "Center",
+            Callback = function()
+                local success, err = Modules.Location.TeleportTo("Island", Config.SelectedIsland)
+                if success then
+                    Notify("Teleport", "Teleported to " .. Config.SelectedIsland .. " (Island)", "map-pin")
+                else
+                    Notify("Teleport Failed", err, "x")
+                end
             end
-        end
-    })
+        })
+    -- ==> ]]
 
-    -- PLAYER TELEPORT
-    local PlayerTeleportSection = TeleportTab:Section({Title = "Player Teleport"})
-    local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({
-        Flag = "SelectedPlayerDropdown",
-        Title = "Select Player",
-        Values = GetAllPlayerNames(),
-        Value = "None",
-        Callback = function(option)
-            Config.SelectedPlayer = option
-        end
-    })
+    -- ==> [[ GAME EVENT TELEPORT
+        TeleportTab:Section({Title = "Game Event Teleport"})
+        TeleportTab:Dropdown({
+            Flag = "SelectedEventDropdown",
+            Title = "Select Game Event",
+            Values = eventNames,
+            Value = eventNames[1],
+            Callback = function(opt)
+                Config.SelectedEvent = opt
+            end
+        })
+        TeleportTab:Button({
+            Title = "Teleport",
+            Callback = function()
+                local success, err = Modules.Location.TeleportTo("GameEvent", Config.SelectedEvent)
+                if success then
+                    Notify("Teleport", "Teleported to " .. Config.SelectedEvent .. " (Game Event)", "map-pin")
+                else
+                    Notify("Teleport Failed", err, "x")
+                end
+            end
+        })
+    -- ==> ]]
 
-    PlayerTeleportSection:Button({
-        Flag = "Refrest_player",
-        Title = "Refresh Player list",
-        Callback = function()
-            PlayerTeleport_1:Refresh(GetAllPlayerNames())
-            Notify("Refresh Player List","Successfully Refresh player list")
-        end
-    })
+    -- ==> [[ NPC TELEPORT
+        TeleportTab:Section({Title = "NPC Teleport"})
+        TeleportTab:Dropdown({
+            Flag = "SelectedNPCDropdown",
+            Title = "Select NPC",
+            Values = npcNames,
+            Value = "None",
+            Callback = function(opt)
+                Config.SelectedNPC = opt
+            end
+        })
+        TeleportTab:Button({
+            Title = "Teleport",
+            Callback = function()
+                local success, err = Modules.Location.TeleportTo("NPC", Config.SelectedNPC)
+                if success then
+                    Notify("Teleport", "Teleported to " .. Config.SelectedNPC .. " (NPC)", "map-pin")
+                else
+                    Notify("Teleport Failed", err, "x")
+                end
+            end
+        })
+    -- ==> ]]
 
-    PlayerTeleportSection:Button({
-        Flag = "Go_player",
-        Title = "Teleport to Selected Player",
-        Callback = function()
-            TeleportToPlayerByName(Config.SelectedPlayer)
-        end
-    })
+    -- ==> [[ PLAYER TELEPORT
+        TeleportTab:Section({Title = "Player Teleport"})
+        local PlayerTeleport_1 = TeleportTab:Dropdown({
+            Flag = "SelectedPlayerDropdown",
+            Title = "Select Player",
+            Values = GetAllPlayerNames(),
+            Value = "None",
+            Callback = function(option)
+                Config.SelectedPlayer = option
+            end
+        })
+
+        TeleportTab:Button({
+            Flag = "Refrest_player",
+            Title = "Refresh Player list",
+            Callback = function()
+                PlayerTeleport_1:Refresh(GetAllPlayerNames())
+                Notify("Refresh Player List","Successfully Refresh player list")
+            end
+        })
+
+        TeleportTab:Button({
+            Flag = "Go_player",
+            Title = "Teleport to Selected Player",
+            Callback = function()
+                TeleportToPlayerByName(Config.SelectedPlayer)
+            end
+        })
+    -- ==> ]]
 --
 
 -- Misc TAB 
     local MiscTab = Window:Tab({Title = "Misc", Icon = "layout-dashboard"})
 
-    -- GAME SETTINGS
-    local GameSection = MiscTab:Section({Title = "Game Settings"})
-    GameSection:Toggle({
-        Flag = "FPSBoostToggle",
-        Title = "FPS Boost",
-        Default = Config.FPSBoost,
-        Callback = ToggleFPSBoost
-    })
-    GameSection:Space()
-    GameSection:Toggle({
-        Flag = "LowGraphicToggle",
-        Title = "Low Graphics",
-        Default = Config.LowGraphics,
-        Callback = ToggleLowGraphics
-    })
-    GameSection:Space()
-    GameSection:Toggle({
-        Flag = "Disable3DRendering",
-        Title = "Disable 3D Rendering",
-        Default = Config.Disable3DRendering,
-        Callback = Toggle3DRenderingDisable
-    })
-    GameSection:Space()
-    GameSection:Toggle({
-        Flag = "AntiAFKToggle",
-        Title = "Anti AFK",
-        Default = Config.AntiAFK,
-        Callback = ToggleAntiAFK
-    })
+    -- ==> [[ GEAR SECTION
+        MiscTab:Section({Title = "Utility & Reward"})
+        MiscTab:Toggle({
+            Flag = "FishingRadar",
+            Title = "Fishing Radar",
+            Desc = "Turns the fishing radar ON or OFF",
+            Default = Config.FishingRadar,
+            Callback = function(state)
+                Config.FishingRadar = state
+                RequestGear("Radar", state)
+                if state then
+                    Notify("Fishing Radar", "Fishing Radar is now enabled.", "rbxassetid://11903551487")
+                else
+                    Notify("Fishing Radar", "Fishing Radar is now disabled.", "rbxassetid://11903551487")
+                end
+            end
+        })
+        MiscTab:Space()
+        MiscTab:Toggle({
+            Flag = "DivingGear",
+            Title = "Diving Gear",
+            Desc = "Equip or Unequips Diving Gear",
+            Default = Config.DivingGear,
+            Callback = function(state)
+                Config.DivingGear = state
+                RequestGear("Oxygen", state)
+                if state then
+                    Notify("Diving Gear", "Diving Gear is now equipped.", "rbxassetid://16419190627")
+                else
+                    Notify("Diving Gear", "Diving Gear is now unequipped.", "rbxassetid://16419190627")
+                end
+            end
+        })
+        MiscTab:Space()
+        MiscTab:Button({
+            Title = "Redeem All Codes",
+            Icon = "ticket-check",
+            Callback = RedeemCode
+        })
+    -- ==> ]]
 
+    -- ==> [[ GAME SETTINGS
+        MiscTab:Section({Title = "Game Settings"})
+        MiscTab:Toggle({
+            Flag = "FPSBoostToggle",
+            Title = "FPS Boost",
+            Default = Config.FPSBoost,
+            Callback = ToggleFPSBoost
+        })
+        MiscTab:Space()
+        MiscTab:Toggle({
+            Flag = "LowGraphicToggle",
+            Title = "Low Graphics",
+            Default = Config.LowGraphics,
+            Callback = ToggleLowGraphics
+        })
+        MiscTab:Space()
+        MiscTab:Toggle({
+            Flag = "Disable3DRendering",
+            Title = "Disable 3D Rendering",
+            Default = Config.Disable3DRendering,
+            Callback = Toggle3DRenderingDisable
+        })
+        MiscTab:Space()
+        MiscTab:Toggle({
+            Flag = "AntiAFKToggle",
+            Title = "Anti AFK",
+            Default = Config.AntiAFK,
+            Callback = ToggleAntiAFK
+        })
+    -- ==> ]]
 --
 
 
 --[[===== FINALIZE =====]]
-
 print("────────────────────────────")
 print("💉 Phoenix HUB Executed Successfully")
 print("Game: "..GetGameName(game.PlaceId).." | Version: "..VERSION)
