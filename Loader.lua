@@ -1,23 +1,9 @@
---// Selena HUB Universal Loader
-print("Selena HUB Universal Loader")
-
-local logo = "rbxassetid://112969347193102"
+--[[ VARIABLE & SERVICES ]]
+local icon = "rbxassetid://112969347193102"
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
---// Progress (1 print saja)
-local function PrintProgress(percent)
-    local totalBars = 20
-    local filled = math.floor((percent/100) * totalBars)
-    local empty = totalBars - filled
-
-    local bar = string.rep("=", filled) .. string.rep("-", empty)
-    io.write(string.format("\rLoading [%s] : %d%%", bar, percent)) -- overwrite baris yang sama
-end
-
-
---// Notification Function
-local function BuatNotifikasi(title, message)
+local function Notif(title, message)
     local old = CoreGui:FindFirstChild("SelenaNotifGui")
     if old then old:Destroy() end
 
@@ -44,7 +30,7 @@ local function BuatNotifikasi(title, message)
     ic.BackgroundTransparency = 1
     ic.Size = UDim2.new(0, 28, 0, 28)
     ic.Position = UDim2.new(0, 10, 0.5, -14)
-    ic.Image = logo
+    ic.Image = icon
     ic.ImageTransparency = 0.05
 
     local ttl = Instance.new("TextLabel", fr)
@@ -67,12 +53,14 @@ local function BuatNotifikasi(title, message)
     msg.TextColor3 = Color3.fromRGB(180, 180, 180)
     msg.Text = message
 
+    -- Animasi masuk
     TweenService:Create(fr, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0, 20)
     }):Play()
 
     task.wait(2.5)
 
+    -- Animasi keluar (FIXED)
     local tweenOut = TweenService:Create(fr, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         Position = UDim2.new(0.5, 0, 0, -80)
     })
@@ -82,12 +70,9 @@ local function BuatNotifikasi(title, message)
     end)
 end
 
-
---// Supported Games
 local SupportedGames = {
     [121864768012064] = "https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/FISH_IT.lua",
 }
-
 
 --// Loader
 local id = game.PlaceId
@@ -100,29 +85,22 @@ if url then
     end)
     local gName = ok and info.Name or "Unknown Game"
 
-    print("✅ Selena HUB | Game Detected:", gName)
-    BuatNotifikasi("Selena HUB", "Loading " .. gName .. "...")
+    print("Selena HUB | Game Detected:", gName)
+    Notif("Selena HUB", "Loading " .. gName .. "...")
 
-    -- PROGRESS: 1 baris saja
-    for i = 1, 100 do
-        PrintProgress(i)
-        task.wait(0.01)
-    end
+    task.wait(1)
 
-    print() -- pindah baris setelah progress selesai
-
-    -- Load script
     local okLoad, err = pcall(function()
         loadstring(game:HttpGet(url))()
     end)
 
     if okLoad then
-        BuatNotifikasi("Selena HUB", "Successfully Loaded " .. gName)
+        Notif("Selena HUB", "Successfully Loaded " .. gName)
     else
-        BuatNotifikasi("Selena HUB", "Error: Failed to Load Script")
+        Notif("Selena HUB", "Error: Failed to Load Script")
         warn("❌ Load Error:", err)
     end
 else
     warn("⚠️ Selena HUB | Game Not Supported:", id)
-    BuatNotifikasi("Selena HUB", "This Game is Not Supported")
+    Notif("Selena HUB", "This Game is Not Supported")
 end
