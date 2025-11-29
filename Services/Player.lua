@@ -19,10 +19,14 @@ local Config = {
 	FlyBodyGyro = nil,
 	FlyBodyVelocity = nil,
 
-	ESPObjects = {} -- tempat penyimpanan highlight dan tag
+	WalkOnWaterEnabled = false,
+	WaterWalkerPart = nil,
+	WaterWalkerConn = nil,
+
+	ESPObjects = {} 
 }
 
---[[ CONNECTIONS ]]
+-- [[ CONNECTIONS ]]
 UserInputService.JumpRequest:Connect(function()
 	if Config.InfiniteJumpEnabled and Humanoid then
 		Humanoid:ChangeState("Jumping")
@@ -40,6 +44,10 @@ RunService.Stepped:Connect(function()
 end)
 
 --[[ ALL FUNCTION ]]
+
+-------------------------------------------------------------
+-- PLAYER ESP
+-------------------------------------------------------------
 local function CreateESPForPlayer(target)
 	if target == Player then return end
 	local character = target.Character
@@ -92,9 +100,7 @@ function TogglePlayerESP(state)
 
 	if state then
 		for _, p in pairs(Players:GetPlayers()) do
-			if p ~= Player then
-				CreateESPForPlayer(p)
-			end
+			if p ~= Player then CreateESPForPlayer(p) end
 		end
 
 		Players.PlayerAdded:Connect(function(p)
@@ -109,18 +115,20 @@ function TogglePlayerESP(state)
 		Players.PlayerRemoving:Connect(function(p)
 			RemoveESPForPlayer(p)
 		end)
+
 	else
 		for _, objs in pairs(Config.ESPObjects) do
 			for _, obj in ipairs(objs) do
-				if obj and obj.Parent then
-					obj:Destroy()
-				end
+				if obj and obj.Parent then obj:Destroy() end
 			end
 		end
 		Config.ESPObjects = {}
 	end
 end
 
+-------------------------------------------------------------
+-- WALK SPEED & JUMP POWER
+-------------------------------------------------------------
 function SetWalkSpeed(value)
 	if Humanoid then Humanoid.WalkSpeed = value end
 end
@@ -132,6 +140,9 @@ function SetJumpPower(value)
 	end
 end
 
+-------------------------------------------------------------
+-- FLY SYSTEM
+-------------------------------------------------------------
 function SetFlySpeed(value)
 	Config.FlySpeed = value
 end
@@ -171,6 +182,7 @@ function ToggleFly(state)
 			Config.FlyBodyGyro.CFrame = camCF
 			Config.FlyBodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * Config.FlySpeed or Vector3.zero
 		end)
+
 	else
 		Humanoid.PlatformStand = false
 		if Config.FlyBodyGyro then Config.FlyBodyGyro:Destroy() Config.FlyBodyGyro = nil end
@@ -178,15 +190,63 @@ function ToggleFly(state)
 	end
 end
 
-function OpenFlyGuiMobile()
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "Fly GUI",
-		Text = "Fly GUI Successfully Open.",
-		Duration = 3
-	})
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
+-------------------------------------------------------------
+-- WALK ON WATER FEATURE (NEW)
+-------------------------------------------------------------
+function ToggleWalkOnWater(state)
+	Config.WalkOnWaterEnabled = state
+
+	-- OFF: cleanup
+	if not state then
+		if Config.WaterWalkerConn then
+			Config.WaterWalkerConn:Disconnect()
+			Config.WaterWalkerConn = nil
+		end
+		if Config.WaterWalkerPart then
+			Config.WaterWalkerPart:Destroy()
+			Config.WaterWalkerPart = nil
+		end
+		return
+	end
+
+	-- Already active
+	if Config.WaterWalkerPart then return end
+
+	-- Create platform
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(6, 1, 6)
+	part.Anchored = true
+	part.CanCollide = true
+	part.Transparency = 1
+	part.Name = "WaterWalker"
+	part.Parent = workspace
+	Config.WaterWalkerPart = part
+
+	-- Update
+	Config.WaterWalkerConn = RunService.Heartbeat:Connect(function()
+		local char = Player.Character
+		if not char then return end
+
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		local params = RaycastParams.new()
+		params.FilterDescendantsInstances = {char}
+		params.FilterType = Enum.RaycastFilterType.Exclude
+
+		local result = workspace:Raycast(hrp.Position, Vector3.new(0, -10, 0), params)
+
+		if result and result.Material == Enum.Material.Water then
+			part.Position = Vector3.new(hrp.Position.X, result.Position.Y + 1, hrp.Position.Z)
+		else
+			part.Position = Vector3.new(0, -5000, 0)
+		end
+	end)
 end
 
+-------------------------------------------------------------
+-- SIMPLE TOGGLES
+-------------------------------------------------------------
 function ToggleInfiniteJump(state)
 	Config.InfiniteJumpEnabled = state
 end
@@ -195,20 +255,26 @@ function ToggleNoClip(state)
 	Config.NoClipEnabled = state
 end
 
+function OpenFlyGuiMobile()
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "Fly GUI",
+		Text = "Fly GUI Successfully Open.",
+		Duration = 3
+	})
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua"))()
+end
+
+
+--[[ CHARACTER RESPAWN ]]
 Player.CharacterAdded:Connect(function(newChar)
 	Character = newChar
 	Humanoid = newChar:WaitForChild("Humanoid")
 
 	if Config.InfiniteJumpEnabled then ToggleInfiniteJump(true) end
 	if Config.NoClipEnabled then ToggleNoClip(true) end
-	if Config.FlyEnabled then
-		task.wait(1)
-		ToggleFly(true)
-	end
-	if Config.PlayerESPEnabled then
-		task.wait(1)
-		TogglePlayerESP(true)
-	end
+	if Config.FlyEnabled then task.wait(1) ToggleFly(true) end
+	if Config.PlayerESPEnabled then task.wait(1) TogglePlayerESP(true) end
+	if Config.WalkOnWaterEnabled then task.wait(1) ToggleWalkOnWater(true) end
 end)
 
 return {
@@ -219,5 +285,6 @@ return {
 	OpenFlyGuiMobile = OpenFlyGuiMobile,
 	ToggleInfiniteJump = ToggleInfiniteJump,
 	ToggleNoClip = ToggleNoClip,
-	TogglePlayerESP = TogglePlayerESP
+	TogglePlayerESP = TogglePlayerESP,
+	ToggleWalkOnWater = ToggleWalkOnWater
 }

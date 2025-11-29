@@ -8,6 +8,7 @@ local GAME = "Phoenix HUB | Fish It"
 local VERSION = 1.2
 local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
+local LOGO = "rbxassetid://140413750237602"
 
 --[[===== DEPENDENCY CHECKS =====]]
     local existingWindow = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("PhoenixHUB_UI_Window")
@@ -49,6 +50,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local UserInputService = game:GetService("UserInputService")
     local HttpService = game:GetService("HttpService")
     local VirtualUser = game:GetService("VirtualUser")
     local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -109,6 +111,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         NoClip = false,
         WalkOnWater = false,
         Fly = false,
+        FlyKey = nil,
         FlySpeed = 50,
         
         -- Graphics Settings
@@ -773,7 +776,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
     local Window = WindUI:CreateWindow({
         Title = GAME,
-        Icon = "rbxassetid://140413750237602",
+        Icon = LOGO,
         Name = "PhoenixHUB_UI_Window",
         Author = "Discord.gg/PhoenixHUB",
         Folder = "PhoenixHUB",
@@ -786,7 +789,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Theme = "Dark",
         Resizable = true,
         SideBarWidth = 200,
-        BackgroundTransparency = 0.5,
+        BackgroundTransparency = 0.8,
         --Background = "rbxassetid://138742999874945",
         --BackgroundImageTransparency = 0.95,
         Theme = "Theme_1",
@@ -831,10 +834,11 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
 --
 
--- ABOUT TAB
+-- INFORMATION TAB
     local InfoTab = Window:Tab({Title = "Information", Icon = "circle-alert"})
     InfoTab:Select()
 
+    local PlayerInfoSection = InfoTab:Section({Title = "Player Information", Opened = true})
     local aboutParagraph = InfoTab:Paragraph({
         Title = "Hello, " .. Player.Name .. " 👋",
         Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
@@ -850,15 +854,19 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             end)
         end
     end
-
-    InfoTab:Space()
-    InfoTab:Button({
-        Title = "Copy Discord Link",
-        Icon = "link",
-        Callback = function()
-            setclipboard(DISCORD_LINK)
-            Notify("Discord Link", "Link copied to clipboard!", "link")
-        end
+    InfoTab:Divider()
+    local JoinDiscordSection = InfoTab:Section({Title = "Join Discord Server Phoenix HUB", Opened = true})
+    InfoTab:Paragraph({
+        Title = "Phoenix HUB Community",
+        Desc = "Be part of our Community Discord—get new announcements, access support, and chat with other users!",
+        Image = LOGO,        
+        Buttons = {
+            {
+                Icon = "link",
+                Title = "Copy Discord Link",
+                Callback = function() setclipboard(DISCORD_LINK); Notify("Discord Link", "Link copied to clipboard!", "link") end,                
+            }
+        }
     })
 --
 
@@ -1021,11 +1029,9 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 -- PLAYER TAB
     local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
 
+    -- MOVEMENT
     local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
-    MovementSection:Slider({
-        Flag = "SpeedSlider",
-        Title = "Walk Speed",
-        Step = 1,
+    local SpeedSlider = PlayerTab:Slider({ Flag = "SpeedSlider", Title = "Walk Speed", Step = 1,
         Value = {
             Min = 16,
             Max = 200,
@@ -1036,11 +1042,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Modules.Player.SetWalkSpeed(value)
         end
     })
-    MovementSection:Space()
-    MovementSection:Slider({
-        Flag = "JumpSlider",
-        Title = "Jump Power",
-        Step = 1,
+    PlayerTab:Space()
+    local JumpSlider = PlayerTab:Slider({ Flag = "JumpSlider", Title = "Jump Power", Step = 1,
         Value = {
             Min = 50,
             Max = 300,
@@ -1051,8 +1054,21 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Modules.Player.SetJumpPower(value)
         end
     })
-    MovementSection:Space()
-    MovementSection:Toggle({
+    PlayerTab:Space()
+    PlayerTab:Button({
+        Title = "Reset Movement",
+        Icon = "rotate-ccw",
+        Callback = function()
+            Modules.Player.SetWalkSpeed(16)
+            SpeedSlider:Set(16)
+            Modules.Player.SetJumpPower(50)
+            JumpSlider:Set(50)
+        end
+    })
+
+    -- ABILITY
+    local AbilitySection = PlayerTab:Section({Title = "Abilities"})
+    PlayerTab:Toggle({
         Flag = "InfiniteJumpToggle",
         Title = "Infinite Jump",
         Default = Config.InfiniteJump,
@@ -1061,8 +1077,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Modules.Player.ToggleInfiniteJump(state)
         end
     })
-    MovementSection:Space()
-    MovementSection:Toggle({
+    PlayerTab:Space()
+    PlayerTab:Toggle({
         Flag = "NoClipToggle",
         Title = "NoClip",
         Default = Config.NoClip,
@@ -1071,8 +1087,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Modules.Player.ToggleNoClip(state)
         end
     })
-    MovementSection:Space()
-    MovementSection:Toggle({
+    PlayerTab:Space()
+    PlayerTab:Toggle({
         Flag = "WalkOnWaterToggle",
         Title = "Walk on Water",
         Default = Config.WalkOnWater,
@@ -1082,18 +1098,9 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         end
     })
 
+    -- FLY
     local FlySection = PlayerTab:Section({Title = "Fly", Opened = true})
-    FlySection:Keybind({
-        Title = "Toggle Fly",
-        Desc = "Keybind to toggle Fly",
-        Value = Config.Fly,
-        Callback = function(key)
-            Config.Fly = key
-            print(key)
-        end
-    })
-    FlySection:Space()
-    FlySection:Slider({
+    PlayerTab:Slider({
         Flag = "FlySlider",
         Title = "Set Fly Speed",
         Step = 1,
@@ -1107,11 +1114,23 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Modules.Player.SetFlySpeed(value)
         end
     })
-    FlySection:Space()
-    FlySection:Button({
+    PlayerTab:Space()
+    PlayerTab:Toggle({
+        Title = "Toggle Fly",
+        Desc = "Keybind to toggle Fly",
+        Icon = "bird",
+        Value = Config.Fly,
+        Callback = function(state)
+            ToggleFly(state)
+            Config.Fly = state
+        end
+    })
+
+    PlayerTab:Space()
+    PlayerTab:Button({
         Flag = "FlyMobile",
         Title = "Fly Gui",
-        Desc = "Fly gui work for all device",
+        Desc = "Fly gui works on all devices, especially for mobile users",
         Callback = function()
             Notify("Fly UI", "Opening Fly ui", "plane")
             loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
