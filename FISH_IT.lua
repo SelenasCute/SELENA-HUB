@@ -760,6 +760,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     Modules.OpenButton.Create(Window)
     Window:OnDestroy(function()
         Cleanup()
+        Modules.OpenButton.Destroy()
     end)
 
     Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
