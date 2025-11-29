@@ -101,8 +101,10 @@ function ToggleUI.Create(window)
 end
 
 function ToggleUI.Destroy()
-	if gui then
-		gui:Destroy()
+	for _, gui in ipairs(PlayerGui:GetChildren()) do
+		if gui.Name == "PhoenixHUB" and gui:IsA("ScreenGui") then
+			gui:Destroy()
+		end
 	end
 end
 
