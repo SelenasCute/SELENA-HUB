@@ -22,6 +22,7 @@ function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
 	-- UI utama toggle button (selalu aktif)
+	local gui = Instance.new("ScreenGui")
 	gui.Name = "PhoenixHUB"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling

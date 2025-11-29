@@ -754,10 +754,10 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
 
     Window:EditOpenButton({
-        Enabled = true,
+        Enabled = false,
     })
 
-    Modules[OpenButton].Init(Window)
+    Modules.OpenButton.Create(Window)
     Window:OnDestroy(function()
         Cleanup()
     end)
