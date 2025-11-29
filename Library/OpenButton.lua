@@ -11,7 +11,7 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 for _, obj in ipairs(PlayerGui:GetChildren()) do
-	if obj.Name == "PhoenixHUB" then
+	if obj.Name == "PhoenixHUB" and obj:IsA("ScreenGui") then 
 		obj:Destroy()
 	end
 end
