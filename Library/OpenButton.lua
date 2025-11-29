@@ -77,19 +77,7 @@ function Module.Init(window)
 	button.MouseButton1Click:Connect(function()
 		window:Toggle()
 	end)
-
-	window:OnDestroy(function()
-		gui:Destroy()
-	end)
-
-	window:OnClose(function()
-		gui.Enabled = true
-	end)
-
-	window:OnOpen(function()
-		gui.Enabled = false
-	end)
-
+	
 	return gui
 end
 
