@@ -44,7 +44,6 @@ RunService.Stepped:Connect(function()
 end)
 
 --[[ ALL FUNCTION ]]
-
 local function CreateESPForPlayer(target)
 	if target == Player then return end
 	local character = target.Character
@@ -62,49 +61,64 @@ local function CreateESPForPlayer(target)
 	if head then
 		local billboard = Instance.new("BillboardGui")
 		billboard.Name = "ESPTag"
-		billboard.Size = UDim2.new(0, 200, 0, 50)
-		billboard.StudsOffset = Vector3.new(0, 2, 0)
+		billboard.Size = UDim2.new(0, 200, 0, 70)
+		billboard.StudsOffset = Vector3.new(0, 2.5, 0)
 		billboard.AlwaysOnTop = true
 		billboard.Parent = head
 
-		local label = Instance.new("TextLabel")
-        label.Name = "ESPLabel"
-		label.Size = UDim2.new(1, 0, 1, 0)
-		label.BackgroundTransparency = 1
-		label.TextColor3 = Color3.fromRGB(255, 0, 0)
-		label.TextStrokeTransparency = 0
-		label.Font = Enum.Font.SourceSansBold
-		label.TextScaled = true
-		label.Parent = billboard
+		-- NAME LABEL
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Name = "NameLabel"
+		nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+		nameLabel.Position = UDim2.new(0, 0, 0, 0)
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		nameLabel.TextStrokeTransparency = 0
+		nameLabel.Font = Enum.Font.SourceSansBold
+		nameLabel.TextScaled = true
+        nameLabel.Text = target.Name
+		nameLabel.Parent = billboard
 
-		-- simpan highlight + billboard + label
-		Config.ESPObjects[target] = {highlight, billboard, label}
+		-- DISTANCE LABEL
+		local distanceLabel = Instance.new("TextLabel")
+		distanceLabel.Name = "DistanceLabel"
+		distanceLabel.Size = UDim2.new(1, 0, 0.35, 0)
+		distanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
+		distanceLabel.BackgroundTransparency = 1
+		distanceLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+		distanceLabel.TextStrokeTransparency = 0
+		distanceLabel.Font = Enum.Font.SourceSansBold
+		distanceLabel.TextScaled = true
+		distanceLabel.Text = "0m"
+		distanceLabel.Parent = billboard
+
+		-- simpan highlight + billboard + kedua label
+		Config.ESPObjects[target] = {highlight, billboard, nameLabel, distanceLabel}
 
 		-- UPDATE DISTANCE LOOP
 		task.spawn(function()
-			while Config.PlayerESPEnabled 
-            and Config.ESPObjects[target] 
-            and target.Character 
-            and target.Character:FindFirstChild("Head") 
-            do
-				
-                task.wait(0.1)
+			while Config.PlayerESPEnabled
+			and Config.ESPObjects[target]
+			and target.Character
+			and target.Character:FindFirstChild("Head")
+			do
+				task.wait(0.1)
 
 				local myChar = Player.Character
 				local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
 				local headTarget = target.Character:FindFirstChild("Head")
-				
-                if not myHRP or not headTarget then 
-					continue 
+
+				if not myHRP or not headTarget then
+					continue
 				end
 
 				local distance = math.floor((myHRP.Position - headTarget.Position).Magnitude)
-
-				label.Text = string.format("%s | %dm", target.Name, distance)
+				distanceLabel.Text = tostring(distance) .. "m"
 			end
 		end)
 	end
 end
+
 
 local function RemoveESPForPlayer(target)
 	if Config.ESPObjects[target] then
