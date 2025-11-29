@@ -2,6 +2,7 @@
 local icon = "rbxassetid://112969347193102"
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local function Notif(title, message)
     local old = CoreGui:FindFirstChild("SelenaNotifGui")
@@ -77,7 +78,6 @@ local SupportedGames = {
 --// Loader
 local id = game.PlaceId
 local url = SupportedGames[id]
-local MarketplaceService = game:GetService("MarketplaceService")
 
 if url then
     local ok, info = pcall(function()

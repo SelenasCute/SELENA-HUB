@@ -4,7 +4,7 @@
 --                      Enhanced Config Manager
 -- ====================================================================
 
-local GAME = "PHOENIX HUB | Fish It"
+local GAME = "Phoenix HUB | Fish It"
 local VERSION = 1.2
 local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
@@ -1435,28 +1435,11 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
 --
 
--- SETTINGS TAB 
-    local SettingsTab = Window:Tab({Title = "Settings", Icon = "rbxassetid://3275025860"})
-
-    -- UI SETTINGS
-    local UISection = SettingsTab:Section({Title = "UI Settings", Opened = true})
-    UISection:Keybind({
-        Flag = "UIKeybind",
-        Title = "UI Toggle Key",
-        Value = Config.UIToggleKey,
-        Callback = SetToggleKey
-    })
-    UISection:Space()
-    UISection:Button({
-        Title = "Destroy UI",
-        Icon = "shield-off",
-        Callback = function()
-            Window:Destroy()
-        end
-    })
+-- Misc TAB 
+    local MiscTab = Window:Tab({Title = "Misc", Icon = "rbxassetid://3275025860"})
 
     -- GAME SETTINGS
-    local GameSection = SettingsTab:Section({Title = "Game Settings", Opened = true})
+    local GameSection = MiscTab:Section({Title = "Game Settings", Opened = true})
     GameSection:Toggle({
         Flag = "FPSBoostToggle",
         Title = "FPS Boost",
@@ -1483,82 +1466,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Title = "Anti AFK",
         Default = Config.AntiAFK,
         Callback = ToggleAntiAFK
-    })
-
-    -- SERVER HOPPING
-    local ServerHoppingSection = SettingsTab:Section({Title = "Server Hopping", Opened = true})
-    ServerHoppingSection:Button({
-        Title = "Rejoin Server",
-        Callback = RejoinServer
-    })
-
-    ServerHoppingSection:Space()
-    ServerHoppingSection:Button({
-        Title = "Hop to New Server",
-        Icon = "arrow-right-circle",
-        Callback = function()
-            Notify("Server Hop", "Hopping to new server...", "arrow-right-circle")
-            local u1 = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
-            u1:Teleport(game.PlaceId)
-        end
-    })
-
-    -- CONFIG SETTINGS
-    local ConfigManager = Window.ConfigManager
-    local ConfigName = "default"
-    local AllConfigs = ConfigManager:AllConfigs()
-    local DefaultValue = table.find(AllConfigs, ConfigName) and ConfigName or nil
-
-    local ConfigManagerSection = SettingsTab:Section({ Title = "Config Usage", Opened = true })
-    local ConfigNameInput = ConfigManagerSection:Input({
-        Title = "Config Name",
-        Icon = "file-cog",
-        Callback = function(value)
-            ConfigName = value
-        end
-    })
-
-    ConfigManagerSection:Dropdown({
-        Title = "All Configs",
-        Desc = "Select existing configs",
-        Values = AllConfigs,
-        Value = DefaultValue,
-        Callback = function(value)
-            ConfigName = value
-            ConfigNameInput:Set(value)
-        end
-    })
-    ConfigManagerSection:Space()
-    ConfigManagerSection:Button({
-        Title = "Save Config",
-        Icon = "",
-        Justify = "Center",
-        Callback = function()
-            Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
-            if Window.CurrentConfig:Save() then
-                WindUI:Notify({
-                    Title = "Config Saved",
-                    Desc = "Config '" .. ConfigName .. "' saved",
-                    Icon = "check",
-                })
-            end
-        end
-    })
-    ConfigManagerSection:Space()
-    ConfigManagerSection:Button({
-        Title = "Load Config",
-        Icon = "",
-        Justify = "Center",
-        Callback = function()
-            Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
-            if Window.CurrentConfig:Load() then
-                WindUI:Notify({
-                    Title = "Config Loaded",
-                    Desc = "Config '" .. ConfigName .. "' loaded",
-                    Icon = "refresh-cw",
-                })
-            end
-        end
     })
 
 --
