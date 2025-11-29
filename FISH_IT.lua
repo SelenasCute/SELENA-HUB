@@ -57,6 +57,7 @@ local LOGO = "rbxassetid://140413750237602"
     local MarketplaceService = game:GetService("MarketplaceService")
     local LocalPlayer = Players.LocalPlayer
     local Player = Players.LocalPlayer
+    local PlayerGui = Player:FindFirstChild("PlayerGui")
     local Character = Player.Character or Player.CharacterAdded:Wait()
     local Humanoid = Character:WaitForChild("Humanoid")
     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -93,7 +94,7 @@ local LOGO = "rbxassetid://140413750237602"
     }
 --
 
---[[===== CONFIGURATION =====]]
+--[[===== CONFIGURATION =====]] --//ANCHOR
     local DefaultConfig = {
         -- Main Features
         AutoFish = false,
@@ -113,6 +114,8 @@ local LOGO = "rbxassetid://140413750237602"
         Fly = false,
         FlyKey = nil,
         FlySpeed = 50,
+        PlayerESP = false,
+        HideAllUsername = false,
         
         -- Graphics Settings
         AntiAFKConnection = nil,
@@ -128,6 +131,7 @@ local LOGO = "rbxassetid://140413750237602"
         SelectedRod = nil,
         SelectedBait = nil,
         SelectedWeather = {},
+        AutoBuyWeathers = false,
         SelectedBoat = nil,
         MerchantOpen = false,
         
@@ -176,6 +180,45 @@ local LOGO = "rbxassetid://140413750237602"
 
 --
 --[[===== UTILITY FUNCTIONS =====]]
+
+    local function HideAllUsernames(state)
+        local AllChar = workspace:FindFirstChild("Characters")
+        if not AllChar then return end
+
+        -- Simpan semua overhead GUI dalam tabel
+        local overheadList = {}
+
+        -- Fungsi untuk hide/show satu karakter
+        local function ProcessCharacter(char)
+            if not char:FindFirstChild("HumanoidRootPart") then return end
+
+            local hrp = char.HumanoidRootPart
+            local overhead = hrp:FindFirstChild("Overhead")
+
+            if overhead and overhead:IsA("BillboardGui") then
+                overhead.Enabled = not state   -- TRUE = muncul, FALSE = hilang
+                overheadList[char] = overhead
+            end
+        end
+
+        -- Proses semua karakter yang sudah ada
+        for _, character in ipairs(AllChar:GetChildren()) do
+            ProcessCharacter(character)
+        end
+
+        -- UPDATE saat karakter baru ditambahkan ke folder "Characters"
+        AllChar.ChildAdded:Connect(function(char)
+            task.wait(1) -- tunggu overhead muncul
+            ProcessCharacter(char)
+        end)
+
+        -- UPDATE saat state berubah (hide/show)
+        for _, overhead in pairs(overheadList) do
+            if overhead then
+                overhead.Enabled = not state
+            end
+        end
+    end
 
     local function TeleportToPlayerByName(name)
         if not name then warn("No player selected!") return end
@@ -717,6 +760,19 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end)
 
+    task.spawn(function()
+        while task.wait(30) do
+            -- AUTO TP SPOT
+            if Config.AutoBuyWeathers and Config.SelectedWeather then
+                -- Loop untuk membeli setiap weather yang dipilih
+                for _, weather in ipairs(Config.SelectedWeather) do
+                    Events.buyweather:InvokeServer(weather.Id)
+                    Notify("Purchase Weather", "Purchased " .. weather.Title, "shopping-cart")
+                    task.wait(0.5) -- Delay untuk menghindari spam
+                end
+            end
+        end
+    end)            
 
 
     --// AUTO SYNC PLAYER MOVEMENT SETTINGS
@@ -727,7 +783,7 @@ local LOGO = "rbxassetid://140413750237602"
                 continue -- tunggu respawn
             end
 
-            -- 🏃 Walk Speed
+            --[[ 🏃 Walk Speed
             if Humanoid.WalkSpeed ~= Config.WalkSpeed then
                 pcall(function()
                     Modules.Player.SetWalkSpeed(Config.WalkSpeed)
@@ -739,7 +795,7 @@ local LOGO = "rbxassetid://140413750237602"
                 pcall(function()
                     Modules.Player.SetJumpPower(Config.JumpPower)
                 end)
-            end
+            end]]
 
             -- 🔁 Infinite Jump
             if Config.InfiniteJump then
@@ -789,7 +845,7 @@ local LOGO = "rbxassetid://140413750237602"
         Theme = "Dark",
         Resizable = true,
         SideBarWidth = 200,
-        BackgroundTransparency = 0.8,
+        BackgroundTransparency = 0.3,
         --Background = "rbxassetid://138742999874945",
         --BackgroundImageTransparency = 0.95,
         Theme = "Theme_1",
@@ -818,7 +874,7 @@ local LOGO = "rbxassetid://140413750237602"
                 },
                 {
                     Title = "Cancel",
-                    Variant = "Secondary",
+                    Variant = "Tertiary",
                     Callback = function()
                     end,
                 },
@@ -838,7 +894,7 @@ local LOGO = "rbxassetid://140413750237602"
     local InfoTab = Window:Tab({Title = "Information", Icon = "circle-alert"})
     InfoTab:Select()
 
-    local PlayerInfoSection = InfoTab:Section({Title = "Player Information", Opened = true})
+    local PlayerInfoSection = InfoTab:Section({Title = "Player Information"})
     local aboutParagraph = InfoTab:Paragraph({
         Title = "Hello, " .. Player.Name .. " 👋",
         Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
@@ -855,7 +911,7 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end
     InfoTab:Divider()
-    local JoinDiscordSection = InfoTab:Section({Title = "Join Discord Server Phoenix HUB", Opened = true})
+    local JoinDiscordSection = InfoTab:Section({Title = "Join Discord Server Phoenix HUB"})
     InfoTab:Paragraph({
         Title = "Phoenix HUB Community",
         Desc = "Be part of our Community Discord—get new announcements, access support, and chat with other users!",
@@ -874,7 +930,7 @@ local LOGO = "rbxassetid://140413750237602"
     local MainTab = Window:Tab({Title = "Main", Icon = "landmark"})
 
     -- AUTO FISH SECTION
-    local AutoFishSection = MainTab:Section({Title = "Auto Fish", Opened = true})
+    local AutoFishSection = MainTab:Section({Title = "Auto Fish"})
     AutoFishSection:Toggle({
         Flag = "AutoFishv1",
         Title = "Auto Fish V1",
@@ -921,7 +977,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- AUTO SELL SECTION
-    local AutoSellSection = MainTab:Section({Title = "Auto Sell", Opened = true})
+    local AutoSellSection = MainTab:Section({Title = "Auto Sell"})
     AutoSellSection:Toggle({
         Flag = "AutoSellInventory",
         Title = "Auto Sell Inventory",
@@ -960,10 +1016,10 @@ local LOGO = "rbxassetid://140413750237602"
     AutoSellSection:Space()
 
     -- EVENT SECTION
-    local EventSection = MainTab:Section({Title = "Event", Opened = true})
+    local EventSection = MainTab:Section({Title = "Event"})
 
     -- MISC SECTION
-    local MiscSection = MainTab:Section({Title = "Misc", Opened = true})
+    local MiscSection = MainTab:Section({Title = "Misc"})
     MiscSection:Toggle({
         Flag = "FishingRadar",
         Title = "Fishing Radar",
@@ -1006,7 +1062,7 @@ local LOGO = "rbxassetid://140413750237602"
 -- QUEST TAB
     local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
 
-    QuestTAB:Section({Title = "Quest Proggress", Opened = true})
+    QuestTAB:Section({Title = "Quest Proggress"})
     QuestTAB:Button({
         Title = "Check Deep Sea Quest Proggress",
         Icon = "rbxassetid://116644397704032",
@@ -1030,7 +1086,7 @@ local LOGO = "rbxassetid://140413750237602"
     local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
 
     -- MOVEMENT
-    local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
+    local MovementSection = PlayerTab:Section({Title = "Movement"})
     local SpeedSlider = PlayerTab:Slider({ Flag = "SpeedSlider", Title = "Walk Speed", Step = 1,
         Value = {
             Min = 16,
@@ -1099,7 +1155,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- FLY
-    local FlySection = PlayerTab:Section({Title = "Fly", Opened = true})
+    local FlySection = PlayerTab:Section({Title = "Fly"})
     PlayerTab:Slider({
         Flag = "FlySlider",
         Title = "Set Fly Speed",
@@ -1117,8 +1173,6 @@ local LOGO = "rbxassetid://140413750237602"
     PlayerTab:Space()
     PlayerTab:Toggle({
         Title = "Toggle Fly",
-        Desc = "Keybind to toggle Fly",
-        Icon = "bird",
         Value = Config.Fly,
         Callback = function(state)
             ToggleFly(state)
@@ -1130,10 +1184,31 @@ local LOGO = "rbxassetid://140413750237602"
     PlayerTab:Button({
         Flag = "FlyMobile",
         Title = "Fly Gui",
+        Icon = "bird",        
         Desc = "Fly gui works on all devices, especially for mobile users",
         Callback = function()
             Notify("Fly UI", "Opening Fly ui", "plane")
             loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))()
+        end
+    })
+
+    PlayerTab:Section({Title = "Other"})
+    PlayerTab:Toggle({
+        Title = "Toggle ESP Player",
+        Value = Config.PlayerESP,
+        Callback = function(state)
+            Config.PlayerESP = state
+            TogglePlayerESP(state)
+        end
+    })    
+    PlayerTab:Space()
+
+    PlayerTab:Toggle({
+        Title = "Hide All Username (Streamer Mode)",
+        Value = Config.HideAllUsername,
+        Callback = function(state)
+            Config.HideAllUsername = state
+            HideAllUsernames(state)
         end
     })
 --
@@ -1141,7 +1216,6 @@ local LOGO = "rbxassetid://140413750237602"
 -- SHOP TAB
 
     local ShopTab = Window:Tab({Title = "Shop", Icon = "shopping-cart"})
-
     local Shop = {
         ["Bait"] = {
             ["Topwater Bait (100$)"] = {Id = 10, Icon = "rbxassetid://78313664669418"},
@@ -1189,161 +1263,249 @@ local LOGO = "rbxassetid://140413750237602"
             ["Mini Yacht (1,2M$)"] = {Id = 14, Icon = "rbxassetid://74219886115935"},
         }
     }
-
-    -- BUY RODS
+    
     local rodList = {}
-    for name, data in pairs(Shop["Rods"]) do
-        table.insert(rodList, {
-            Title = name,
-            Icon = data.Icon,
-            Id = data.Id,
-            PriceValue = parsePrice(name)
-        })
-    end
-    table.sort(rodList, function(a, b) return a.PriceValue < b.PriceValue end)
-
-    local BuyRodSection = ShopTab:Section({Title = "Buy Rods", Opened = true})
-    BuyRodSection:Dropdown({
-        Flag = "SelectedRodDropdown",
-        Title = "Select Rod",
-        Values = rodList,
-        Value = "None",
-        Callback = function(option)
-            Config.SelectedRod = option
+        for name, data in pairs(Shop["Rods"]) do
+            table.insert(rodList, {
+                Title = name,
+                Icon = data.Icon,
+                Id = data.Id,
+                PriceValue = parsePrice(name)
+            })
         end
-    })
-    BuyRodSection:Space()
-    BuyRodSection:Button({
-        Title = "Buy Selected Rod",
-        Callback = function()
-            if not Config.SelectedRod then return end
-            Events.buyrod:InvokeServer(Config.SelectedRod.Id)
-            Notify("Purchase Rod", "Purchased " .. Config.SelectedRod.Title, "shopping-cart")
-        end
-    })
-
-    -- BUY BAIT
+        table.sort(rodList, function(a, b) return a.PriceValue < b.PriceValue end)
     local baitList = {}
-    for name, data in pairs(Shop["Bait"]) do
-        table.insert(baitList, {
-            Title = name,
-            Icon = data.Icon,
-            Id = data.Id,
-            PriceValue = parsePrice(name)
-        })
-    end
-    table.sort(baitList, function(a, b) return a.PriceValue < b.PriceValue end)
-
-    local BuyBaitSection = ShopTab:Section({Title = "Buy Bait", Opened = true})
-    BuyBaitSection:Dropdown({
-        Flag = "SelectedBaitDropdown",
-        Title = "Select Bait",
-        Values = baitList,
-        Value = "None",
-        Callback = function(option)
-            Config.SelectedBait = option
+        for name, data in pairs(Shop["Bait"]) do
+            table.insert(baitList, {
+                Title = name,
+                Icon = data.Icon,
+                Id = data.Id,
+                PriceValue = parsePrice(name)
+            })
         end
-    })
-    BuyBaitSection:Space()
-    BuyBaitSection:Button({
-        Title = "Buy Selected Bait",
-        Callback = function()
-            if not Config.SelectedBait then return end
-            Events.buybait:InvokeServer(Config.SelectedBait.Id)
-            Notify("Purchase Bait", "Purchased " .. Config.SelectedBait.Title, "shopping-cart")
-        end
-    })
-
-    -- BUY WEATHER
+        table.sort(baitList, function(a, b) return a.PriceValue < b.PriceValue end)    
     local weatherlist = {}
-    for name, data in pairs(Shop["Weather"]) do
-        table.insert(weatherlist, {
-            Title = name,
-            Icon = data.Icon,
-            Id = data.Id,
-            PriceValue = parsePrice(name)
-        })
-    end
-    table.sort(weatherlist, function(a, b) return a.PriceValue < b.PriceValue end)
-
-    local BuyWeatherSection = ShopTab:Section({Title = "Buy Weather", Opened = true})
-    BuyWeatherSection:Dropdown({
-        Flag = "SelectedWeatherDropdown",
-        Title = "Select Weather",
-        Values = weatherlist,
-        Value = {},
-        Multi = true,
-        Callback = function(option)
-            Config.SelectedWeather = option
+        for name, data in pairs(Shop["Weather"]) do
+            table.insert(weatherlist, {
+                Title = name,
+                Icon = data.Icon,
+                Id = data.Id,
+                PriceValue = parsePrice(name)
+            })
         end
-    })
-    BuyWeatherSection:Space()
-    BuyWeatherSection:Button({
-        Title = "Buy Selected Weather",
-        Callback = function()
-            if not Config.SelectedWeather or #Config.SelectedWeather == 0 then
-                Notify("Error", "Please select at least one weather!", "x")
-                return
-            end
-            
-            -- Loop untuk membeli setiap weather yang dipilih
-            for _, weather in ipairs(Config.SelectedWeather) do
-                Events.buyweather:InvokeServer(weather.Id)
-                Notify("Purchase Weather", "Purchased " .. weather.Title, "shopping-cart")
-                task.wait(0.5) -- Delay untuk menghindari spam
-            end
-        end
-    })
-
-    -- BUY BOAT
+        table.sort(weatherlist, function(a, b) return a.PriceValue < b.PriceValue end)    
     local boatlist = {}
-    for name, data in pairs(Shop["Boat"]) do
-        table.insert(boatlist, {
-            Title = name,
-            Icon = data.Icon,
-            Id = data.Id,
-            PriceValue = parsePrice(name)
+        for name, data in pairs(Shop["Boat"]) do
+            table.insert(boatlist, {
+                Title = name,
+                Icon = data.Icon,
+                Id = data.Id,
+                PriceValue = parsePrice(name)
+            })
+        end
+        table.sort(boatlist, function(a, b) return a.PriceValue < b.PriceValue end)    
+    -->
+    
+    -- ==> [[ BUY RODS
+        ShopTab:Section({Title = "Buy Rods"})
+        ShopTab:Dropdown({ Flag = "SelectedRodDropdown", Title = "Select Rod", Values = rodList, Value = "None",
+            Callback = function(option)
+                Config.SelectedRod = option
+            end
         })
-    end
-    table.sort(boatlist, function(a, b) return a.PriceValue < b.PriceValue end)
+        ShopTab:Space()
+        ShopTab:Button({ Title = "Buy Selected Rod",
+            Callback = function()
+                if not Config.SelectedRod then return end
+                Events.buyrod:InvokeServer(Config.SelectedRod.Id)
+                Notify("Purchase Rod", "Purchased " .. Config.SelectedRod.Title, "shopping-cart")
+            end
+        })
+    -- ==> ]]
 
-    local BuyBoatSection = ShopTab:Section({Title = "Buy Boat", Opened = true})
-    BuyBoatSection:Dropdown({
-        Flag = "SelectedBoatDropdown",
-        Title = "Select Boat",
-        Values = boatlist,
-        Value = boatlist[1],
-        Callback = function(option)
-            Config.SelectedBoat = option
-        end
-    })
-    BuyBoatSection:Space()
-    BuyBoatSection:Button({
-        Title = "Buy Selected Boat",
-        Callback = function()
-            if not Config.SelectedBoat then return end
-            Events.buyboat:InvokeServer(Config.SelectedBoat.Id)
-            Notify("Purchase Boat", "Purchased " .. Config.SelectedBoat.Title, "shopping-cart")
-        end
-    })
+    -- ==> [[ BUY BAIT
+        ShopTab:Section({Title = "Buy Bait"})
+        ShopTab:Dropdown({
+            Flag = "SelectedBaitDropdown",
+            Title = "Select Bait",
+            Values = baitList,
+            Value = "None",
+            Callback = function(option)
+                Config.SelectedBait = option
+            end
+        })
+        ShopTab:Space()
+        ShopTab:Button({
+            Title = "Buy Selected Bait",
+            Callback = function()
+                if not Config.SelectedBait then return end
+                Events.buybait:InvokeServer(Config.SelectedBait.Id)
+                Notify("Purchase Bait", "Purchased " .. Config.SelectedBait.Title, "shopping-cart")
+            end
+        })
+    -- ==> ]]
 
-    -- MERCHANT
-    local MerchantSection = ShopTab:Section({Title = "Merchant Shop", Opened = true})
-    MerchantSection:Toggle({
-        Flag = "OpenMerchantShop",
-        Title = "Open Merchant Shop",
-        Default = Config.MerchantOpen,
-        Callback = function(state)
-            OpenMerchant(state)
+    -- ==> [[ BUY WEATHER
+        local BuyWeatherSection = ShopTab:Section({Title = "Buy Weather"})
+        ShopTab:Dropdown({
+            Flag = "SelectedWeatherDropdown",
+            Title = "Select Weather",
+            Values = weatherlist,
+            Value = {},
+            Multi = true,
+            Callback = function(option)
+                Config.SelectedWeather = option
+            end
+        })
+        ShopTab:Space()
+        ShopTab:Button({
+            Title = "Buy Selected Weather (Once)",
+            Callback = function()
+                if not Config.SelectedWeather or #Config.SelectedWeather == 0 then
+                    Notify("Error", "Please select at least one weather!", "x")
+                    return
+                end
+                
+                -- Loop untuk membeli setiap weather yang dipilih
+                for _, weather in ipairs(Config.SelectedWeather) do
+                    Events.buyweather:InvokeServer(weather.Id)
+                    Notify("Purchase Weather", "Purchased " .. weather.Title, "shopping-cart")
+                    task.wait(0.5) -- Delay untuk menghindari spam
+                end
+            end
+        })
+        ShopTab:Space()
+        ShopTab:Toggle({
+            Flag = "AutoBuyWeatherss",
+            Title = "Auto Buy Selected Weather",
+            Callback = function(state)
+                if not Config.SelectedWeather or #Config.SelectedWeather == 0 then
+                    Notify("Error", "Please select at least one weather!", "x")
+                    return
+                end
+
+                Config.AutoBuyWeathers = state
+                if Config.AutoBuyWeathers and Config.SelectedWeather then
+                    -- Loop untuk membeli setiap weather yang dipilih
+                    for _, weather in ipairs(Config.SelectedWeather) do
+                        Events.buyweather:InvokeServer(weather.Id)
+                        Notify("Purchase Weather", "Purchased " .. weather.Title, "shopping-cart")
+                        task.wait(0.5) -- Delay untuk menghindari spam
+                    end
+                end
+            end
+        })
+    -- ==> ]]
+
+    -- ==> [[ BUY BOAT
+        ShopTab:Section({Title = "Buy Boat"})
+        ShopTab:Dropdown({
+            Flag = "SelectedBoatDropdown",
+            Title = "Select Boat",
+            Values = boatlist,
+            Value = "None",
+            Callback = function(option)
+                Config.SelectedBoat = option
+            end
+        })
+        ShopTab:Space()
+        ShopTab:Button({
+            Title = "Buy Selected Boat",
+            Callback = function()
+                if not Config.SelectedBoat then return end
+                Events.buyboat:InvokeServer(Config.SelectedBoat.Id)
+                Notify("Purchase Boat", "Purchased " .. Config.SelectedBoat.Title, "shopping-cart")
+            end
+        })
+    -- ==> ]]
+
+    -- ==> [[ MERCHANT
+        ShopTab:Section({Title = "Merchant Shop"})
+        local MerchantStock = ShopTab:Paragraph({
+            Title = "Current Stock",
+            Desc = "Loading...",
+        })        
+
+        local function ColorPrice(price)
+            if not price then return "<font color='#FFFF00'>—</font>" end
+
+            -- Kalau harganya Robux (dengan atau tanpa $)
+            if string.find(price:lower(), "robux") then
+                return string.format("<font color='#90EE90'>%s</font>", price) -- light green
+            end
+
+            -- Harga normal = kuning
+            return string.format("<font color='#FFFF00'>%s</font>", price)
         end
-    })
+
+
+        local function GetMerchantStock()
+            local Names = {}
+            local Prices = {}
+
+            for _, item in ipairs(PlayerGui.Merchant.Main.Background.Items.ScrollingFrame:GetChildren()) do
+                
+                if item:IsA("ImageLabel") then
+                    
+                    local itemName = "Unknown"
+                    if item:FindFirstChild("Frame") and item.Frame:FindFirstChild("ItemName") then
+                        itemName = item.Frame.ItemName.Text
+                    end
+
+                    local itemPrice = "$Robux"
+                    if item:FindFirstChild("Frame") then
+                        local innerFrame = item.Frame:FindFirstChild("Frame")
+                        if innerFrame and innerFrame:FindFirstChild("Price") then
+                            itemPrice = innerFrame.Price.Text
+                        end
+                    end
+
+                    table.insert(Names, itemName)
+                    table.insert(Prices, itemPrice)
+                end
+            end
+
+            return Names, Prices
+        end
+
+
+        task.spawn(function()
+            while true do
+                task.wait(1)
+
+                local Names, Prices = GetMerchantStock()
+                local refreshText = PlayerGui.Merchant.Main.Background.RefreshLabel.Text
+
+                MerchantStock:SetDesc(string.format(
+                    "1. %s = %s\n2. %s = %s\n3. %s = %s\n\nNext Refresh: %s",
+                    Names[1] or "—",
+                    ColorPrice(Prices[1]),
+                    Names[2] or "—",
+                    ColorPrice(Prices[2]),
+                    Names[3] or "—",
+                    ColorPrice(Prices[3]),
+                    refreshText
+                ))
+            end
+        end)
+
+        ShopTab:Space()
+        ShopTab:Toggle({
+            Flag = "OpenMerchantShop",
+            Title = "Open Merchant Shop",
+            Default = Config.MerchantOpen,
+            Callback = function(state)
+                OpenMerchant(state)
+            end
+        })
+    -- ==> ]]
 --
 
 -- TELEPORT TAB
     local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
 
     -- FISHING ZONE
-    local FishingZoneSection = TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport", Opened = true})
+    local FishingZoneSection = TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport"})
 
     FishingZoneSection:Dropdown({ Flag = "SelectedSpotDropdown",
         Title = "Select Fishing Spots",
@@ -1425,7 +1587,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- ISLAND
-    local IslandTeleportSection = TeleportTab:Section({Title = "Teleport To Island", Opened = true})
+    local IslandTeleportSection = TeleportTab:Section({Title = "Teleport To Island"})
     IslandTeleportSection:Dropdown({ Flag = "IslandTP",
         Title = "Select Island",
         Values = IslandNames,
@@ -1449,7 +1611,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- GAME EVENT TELEPORT
-    local GameEventSection = TeleportTab:Section({Title = "Game Event Teleport", Opened = true})
+    local GameEventSection = TeleportTab:Section({Title = "Game Event Teleport"})
     GameEventSection:Dropdown({
         Flag = "SelectedEventDropdown",
         Title = "Select Game Event",
@@ -1472,7 +1634,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- NPC TELEPORT
-    local NPCSection = TeleportTab:Section({Title = "NPC Teleport", Opened = true})
+    local NPCSection = TeleportTab:Section({Title = "NPC Teleport"})
     NPCSection:Dropdown({
         Flag = "SelectedNPCDropdown",
         Title = "Select NPC",
@@ -1495,7 +1657,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     -- PLAYER TELEPORT
-    local PlayerTeleportSection = TeleportTab:Section({Title = "Player Teleport", Opened = true})
+    local PlayerTeleportSection = TeleportTab:Section({Title = "Player Teleport"})
     local PlayerTeleport_1 = PlayerTeleportSection:Dropdown({
         Flag = "SelectedPlayerDropdown",
         Title = "Select Player",
@@ -1528,7 +1690,7 @@ local LOGO = "rbxassetid://140413750237602"
     local MiscTab = Window:Tab({Title = "Misc", Icon = "layout-dashboard"})
 
     -- GAME SETTINGS
-    local GameSection = MiscTab:Section({Title = "Game Settings", Opened = true})
+    local GameSection = MiscTab:Section({Title = "Game Settings"})
     GameSection:Toggle({
         Flag = "FPSBoostToggle",
         Title = "FPS Boost",
