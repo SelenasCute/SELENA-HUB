@@ -12,21 +12,23 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local ToggleUI = {}
 local gui
+
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
-	--[[ UI ]]--
+	-- UI utama toggle button (selalu aktif)
 	gui = Instance.new("ScreenGui")
 	gui.Name = "PhoenixHUB"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = PlayerGui
-	gui.Enabled = false -- ⬅️ Tambahkan ini
+	gui.Enabled = true
 
+	-- Toggle Button
 	local button = Instance.new("ImageButton")
 	button.Name = "ToggleButton"
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
-	button.Position = UDim2.new(0.975, 0, 0.5, 0)
+	button.Position = UDim2.new(0.97, 0, 0.5, 0)
 	button.Size = UDim2.new(0.031, 0, 0.056, 0)
 	button.BackgroundColor3 = Color3.fromRGB(255, 115, 230)
 	button.Image = "rbxassetid://140413750237602"
@@ -34,13 +36,8 @@ function ToggleUI.Create(window)
 	button.AutoButtonColor = true
 	button.Parent = gui
 
-	local uiAspect = Instance.new("UIAspectRatioConstraint")
-	uiAspect.AspectRatio = 1
-	uiAspect.Parent = button
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0.5, 0)
-	corner.Parent = button
+	Instance.new("UIAspectRatioConstraint", button).AspectRatio = 1
+	Instance.new("UICorner", button).CornerRadius = UDim.new(0.5, 0)
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 3
@@ -48,7 +45,7 @@ function ToggleUI.Create(window)
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = button
 
-	-- Draggable stabil
+	-- Draggable
 	local dragging = false
 	local dragStart, startPos
 
@@ -76,23 +73,24 @@ function ToggleUI.Create(window)
 		end
 	end)
 
-	-- Klik toggle UI
+	-- Klik toggle WindUI window
 	button.MouseButton1Click:Connect(function()
 		window:Toggle()
 	end)
 
-	-- Hubungkan dengan event window
+	-- Event Open/Close
 	if window.OnOpen then
 		window:OnOpen(function()
+			-- tidak perlu apa-apa, tombol tetap aktif
 		end)
 	end
-	
+
 	if window.OnClose then
 		window:OnClose(function()
-			gui.Enabled = true
+			-- UI tetap ada, tidak disable
 		end)
 	end
-	
+
 	if window.OnDestroy then
 		window:OnDestroy(function()
 			gui:Destroy()
@@ -103,7 +101,9 @@ function ToggleUI.Create(window)
 end
 
 function ToggleUI.Destroy()
-	gui:Destroy()
+	if gui then
+		gui:Destroy()
+	end
 end
 
 return ToggleUI
