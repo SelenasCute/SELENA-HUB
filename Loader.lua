@@ -5,14 +5,14 @@ local logo = "rbxassetid://112969347193102"
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
---// Progress Print Function
+--// Progress (1 print saja)
 local function PrintProgress(percent)
     local totalBars = 20
     local filled = math.floor((percent/100) * totalBars)
     local empty = totalBars - filled
 
     local bar = string.rep("=", filled) .. string.rep("-", empty)
-    print(string.format("Loading [%s] : %d%%", bar, percent))
+    io.write(string.format("\rLoading [%s] : %d%%", bar, percent)) -- overwrite baris yang sama
 end
 
 
@@ -67,14 +67,12 @@ local function BuatNotifikasi(title, message)
     msg.TextColor3 = Color3.fromRGB(180, 180, 180)
     msg.Text = message
 
-    -- Animasi masuk
     TweenService:Create(fr, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0, 20)
     }):Play()
 
     task.wait(2.5)
 
-    -- Animasi keluar
     local tweenOut = TweenService:Create(fr, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         Position = UDim2.new(0.5, 0, 0, -80)
     })
@@ -105,13 +103,15 @@ if url then
     print("✅ Selena HUB | Game Detected:", gName)
     BuatNotifikasi("Selena HUB", "Loading " .. gName .. "...")
 
-    -- PROGRESS BAR START
+    -- PROGRESS: 1 baris saja
     for i = 1, 100 do
         PrintProgress(i)
         task.wait(0.01)
     end
-    -- PROGRESS END
 
+    print() -- pindah baris setelah progress selesai
+
+    -- Load script
     local okLoad, err = pcall(function()
         loadstring(game:HttpGet(url))()
     end)
