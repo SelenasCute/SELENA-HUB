@@ -10,9 +10,10 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local gui = PlayerGui:FindFirstChild("PhoenixHUB")
-if not gui then
-	gui = Instance.new("ScreenGui")
+for _, obj in ipairs(PlayerGui:GetChildren()) do
+	if obj.Name == "PhoenixHUB" then
+		obj:Destroy()
+	end
 end
 
 local ToggleUI = {}
