@@ -5,6 +5,17 @@ local logo = "rbxassetid://112969347193102"
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
+--// Progress Print Function
+local function PrintProgress(percent)
+    local totalBars = 20
+    local filled = math.floor((percent/100) * totalBars)
+    local empty = totalBars - filled
+
+    local bar = string.rep("=", filled) .. string.rep("-", empty)
+    print(string.format("Loading [%s] : %d%%", bar, percent))
+end
+
+
 --// Notification Function
 local function BuatNotifikasi(title, message)
     local old = CoreGui:FindFirstChild("SelenaNotifGui")
@@ -63,7 +74,7 @@ local function BuatNotifikasi(title, message)
 
     task.wait(2.5)
 
-    -- Animasi keluar (FIXED)
+    -- Animasi keluar
     local tweenOut = TweenService:Create(fr, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
         Position = UDim2.new(0.5, 0, 0, -80)
     })
@@ -73,10 +84,12 @@ local function BuatNotifikasi(title, message)
     end)
 end
 
+
 --// Supported Games
 local SupportedGames = {
     [121864768012064] = "https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/FISH_IT.lua",
 }
+
 
 --// Loader
 local id = game.PlaceId
@@ -92,7 +105,12 @@ if url then
     print("✅ Selena HUB | Game Detected:", gName)
     BuatNotifikasi("Selena HUB", "Loading " .. gName .. "...")
 
-    task.wait(1)
+    -- PROGRESS BAR START
+    for i = 1, 100 do
+        PrintProgress(i)
+        task.wait(0.01)
+    end
+    -- PROGRESS END
 
     local okLoad, err = pcall(function()
         loadstring(game:HttpGet(url))()
