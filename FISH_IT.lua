@@ -734,7 +734,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
     local Window = WindUI:CreateWindow({
         Title = GAME,
-        Icon = "rbxassetid://112969347193102",
+        Icon = "rbxassetid://140413750237602",
         Name = "SelenaHUB_UI_Window",
         Author = "Discord.gg/selenaHub",
         Folder = "Selenahub",
