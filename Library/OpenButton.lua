@@ -14,6 +14,10 @@ local ToggleUI = {}
 
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
+	local Existed = PlayerGui:FindFirstChild("SelenaHub_Toggle")
+	if Existed then
+		Existed:Destroy()
+	end
 
 	--[[ UI ]]--
 	local gui = Instance.new("ScreenGui")
