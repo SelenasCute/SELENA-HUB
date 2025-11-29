@@ -11,12 +11,12 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local ToggleUI = {}
-local gui
 
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
 	-- UI utama toggle button (selalu aktif)
+	local gui
 	gui = Instance.new("ScreenGui")
 	gui.Name = "PhoenixHUB"
 	gui.ResetOnSpawn = false
