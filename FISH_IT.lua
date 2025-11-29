@@ -1329,7 +1329,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     FishingZoneSection:Toggle({
         Flag = "Teleport & Freeze at Selected Spot",
         Title = "Teleport & Freeze at Selected Spot",
-        Default = Config.SelectedSpot,
+        Default = Config.AutoTPSpot,
         Callback = function(state)
             Config.AutoTPSpot = state
             if state then
@@ -1364,7 +1364,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
             Config.SelectedIsland = opt
         end
     })
-    IslandTeleportSection:Space()
     IslandTeleportSection:Button({
         Title = "Teleport to Selected Island",
         Icon = "",
