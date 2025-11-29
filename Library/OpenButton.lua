@@ -14,7 +14,11 @@ local ToggleUI = {}
 
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
-	local Existed = PlayerGui:FindFirstChild("SelenaHub_Toggle")
+	for_, Existed in ipairs(PlayerGui:GetChildren()) do
+		if Existed.Name == SelenaHub_Toggle and Existed:IsA("ScreenGui") then
+			Existed:Destroy()
+		end
+	end
 	if Existed then
 		Existed:Destroy()
 	end
