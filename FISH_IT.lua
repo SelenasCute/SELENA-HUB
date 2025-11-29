@@ -753,11 +753,11 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Theme = "Theme_1",
     })
 
-    --[[Window:EditOpenButton({
-        Enabled = false,
+    Window:EditOpenButton({
+        Enabled = true,
     })
 
-    Modules.OpenButton.Create(Window)
+    --[[Modules.OpenButton.Create(Window)
     Window:OnDestroy(function()
         Cleanup()
         Modules.OpenButton.Destroy()
