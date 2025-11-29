@@ -1,10 +1,10 @@
 -- ====================================================================
---                      Selena HUB | Fish it
+--                      Phoenix HUB | Fish it
 --                      Last Update 11/8/2025
 --                      Enhanced Config Manager
 -- ====================================================================
 
-local GAME = "Selena HUB | Fish It"
+local GAME = "Phoenix HUB | Fish It"
 local VERSION = 1.2
 local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
@@ -518,7 +518,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
                 v1.AnchorPoint = Vector2.new(0.5, 0.5)
                 v1.Position = UDim2.new(0.5, 0, 0.5, 0)
                 v1.BackgroundTransparency = 1
-                v1.Text = "SELENA HUB"
+                v1.Text = "Phoenix HUB"
                 v1.TextColor3 = Color3.fromRGB(255, 255, 255)
                 v1.TextScaled = true
                 v1.Font = Enum.Font.GothamBold
@@ -1566,7 +1566,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --[[===== FINALIZE =====]]
 
 print("────────────────────────────")
-print("💉 Selena HUB Executed Successfully")
+print("💉 Phoenix HUB Executed Successfully")
 print("Game: "..GetGameName(game.PlaceId).." | Version: "..VERSION)
 print("Status: Modules Loaded, UI Initialized ✅")
 print("────────────────────────────")
