@@ -60,6 +60,27 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     local leaderstats = Player:FindFirstChild("leaderstats")
 
+    -- TAMBAHKAN FUNCTION BARU INI:
+    local function GetCharacter()
+        if not Player.Character then
+            Player.CharacterAdded:Wait()
+        end
+        return Player.Character
+    end
+
+    local function GetHumanoidRootPart()
+        local char = GetCharacter()
+        if not char then return nil end
+        return char:WaitForChild("HumanoidRootPart")
+    end
+
+    -- Update character ketika respawn
+    Player.CharacterAdded:Connect(function(newCharacter)
+        Character = newCharacter
+        Humanoid = newCharacter:WaitForChild("Humanoid")
+        HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    end)
+
 --
 
 --[[===== MODULES =====]]
@@ -152,6 +173,20 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
 --
 --[[===== UTILITY FUNCTIONS =====]]
+
+    local function TeleportToPlayerByName(name)
+        if not name then warn("No player selected!") return end
+        local target = Players:FindFirstChild(name)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = target.Character.HumanoidRootPart
+            local pchar = Player.Character
+            if pchar and pchar:FindFirstChild("HumanoidRootPart") then
+                pchar.HumanoidRootPart.CFrame = hrp.CFrame + Vector3.new(0,5,0)
+                Notify("Teleport to "..target.Name, "Successfully Teleported to selected player", "users")
+            end
+        end
+    end
+
     function Cleanup()
         for k, v in pairs(DefaultConfig) do
             Config[k] = typeof(v) == "table" and table.clone(v) or v
@@ -655,17 +690,30 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     end)
 
     --// AUTO TELEPORT TO SAVED Position
-    while true do
-        task.wait(5)
-        if AutoTPSpot == true then
-            hrp.CFrame = SelectedSpot
+    task.spawn(function()
+        while task.wait(5) do
+            -- AUTO TP POSITION
+            if Config.AutoTPPosition and Config.SelectedPosition then
+                local hrp = GetHumanoidRootPart()
+                if hrp then
+                    hrp.CFrame = Config.SelectedPosition
+                end
+            end
         end
+    end)
 
-        if AutoTPPosition == true then
-            hrp.CFrame = SelectedPosition
+    task.spawn(function()
+        while task.wait(5) do
+            -- AUTO TP SPOT
+            if Config.AutoTPSpot and Config.SelectedSpot then
+                local hrp = GetHumanoidRootPart()
+                if hrp then
+                    hrp.CFrame = Modules.Location.LOCATIONS["Spot"][Config.SelectedSpot] or hrp.CFrame
+                end
+            end
         end
+    end)
 
-    end
 
 
     --// AUTO SYNC PLAYER MOVEMENT SETTINGS
@@ -747,7 +795,10 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     Modules.OpenButton.Create(Window)
     Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
-    Window:OnDestroy(function() Cleanup() end)
+    Window:OnDestroy(function() myConfig:Save(); Cleanup() end)
+
+    local ConfigManager = Window.ConfigManager
+    local myConfig = ConfigManager:CreateConfig("Default") -- will be saved as config1.json
 
     Window:CreateTopbarButton("", "x",    function() 
         Window:Dialog({ Icon = "rbxassetid://14446997892", Title = "Close Confirmation", Content = "Are you sure you want to close gui?",
@@ -773,7 +824,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Window:Toggle()
     end,  989)
     
-
+    myConfig:Load()
 
 --
 
@@ -1312,8 +1363,13 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
                 Notify("Teleport Failed", "No saved position found. Please save a position first.", "x")
                 return
             end
-            HumanoidRootPart.CFrame = Config.SelectedPosition
-            Notify("Teleport", "Teleported to saved position.", "map-pin")
+            local hrp = GetHumanoidRootPart()
+            if hrp then
+                hrp.CFrame = Config.SelectedPosition
+                Notify("Teleport", "Teleported to saved position.", "map-pin")
+            else
+                Notify("Teleport Failed", "Character not found!", "x")
+            end
         end
     })
     FishingZoneSection:Space()
@@ -1322,7 +1378,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Title = "Teleport & Freeze at Selected Spot",
         Default = Config.AutoTPSpot,
         Callback = function(state)
-            if SelectedSpot == nil then return Notify("Auto Teleport", "You need to select the spot first") end
             Config.AutoTPSpot = state
             if state then
                 Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
@@ -1337,7 +1392,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Title = "Auto Teleport to Saved Position",
         Default = Config.AutoTPPosition,
         Callback = function(state)
-            if SelectedPosition == nil then return Notify("Auto Teleport", "You need to set/save position first") end
 
             Config.AutoTPPosition = state
             if state then
@@ -1482,6 +1536,103 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     })
 
 --
+
+
+do -- config panel
+    local ConfigTab = Window:Tab({
+        Title = "Config Usage",
+        Icon = "folder",
+    })
+
+    local ConfigManager = Window.ConfigManager
+    local ConfigName = "default"
+
+    local ConfigNameInput = ConfigTab:Input({
+        Title = "Config Name",
+        Icon = "file-cog",
+        Callback = function(value)
+            ConfigName = value
+        end
+    })
+
+    ConfigTab:Space()
+    
+    local AutoLoadToggle = ConfigTab:Toggle({
+        Title = "Enable Auto Load to Selected Config",
+        Value = false,
+        Callback = function(v)
+            Window.CurrentConfig:SetAutoLoad(v)
+        end
+    })
+
+    ConfigTab:Space()
+
+    local AllConfigs = ConfigManager:AllConfigs()
+    local DefaultValue = table.find(AllConfigs, ConfigName) and ConfigName or nil
+
+    local AllConfigsDropdown = ConfigTab:Dropdown({
+        Title = "All Configs",
+        Desc = "Select existing configs",
+        Values = AllConfigs,
+        Value = DefaultValue,
+        Callback = function(value)
+            ConfigName = value
+            ConfigNameInput:Set(value)
+            
+            AutoLoadToggle:Set(ConfigManager:GetConfig(ConfigName).AutoLoad or false)
+        end
+    })
+
+    ConfigTab:Space()
+
+    ConfigTab:Button({
+        Title = "Save Config",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:Config(ConfigName)
+            if Window.CurrentConfig:Save() then
+                WindUI:Notify({
+                    Title = "Config Saved",
+                    Desc = "Config '" .. ConfigName .. "' saved",
+                    Icon = "check",
+                })
+            end
+            
+            AllConfigsDropdown:Refresh(ConfigManager:AllConfigs())
+        end
+    })
+
+    ConfigTab:Space()
+
+    ConfigTab:Button({
+        Title = "Load Config",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:CreateConfig(ConfigName)
+            if Window.CurrentConfig:Load() then
+                WindUI:Notify({
+                    Title = "Config Loaded",
+                    Desc = "Config '" .. ConfigName .. "' loaded",
+                    Icon = "refresh-cw",
+                })
+            end
+        end
+    })
+
+    ConfigTab:Space()
+
+    ConfigTab:Button({
+        Title = "Print AutoLoad Configs",
+        Icon = "",
+        Justify = "Center",
+        Callback = function()
+            print(HttpService:JSONDecode(ConfigManager:GetAutoLoadConfigs()))
+        end
+    })
+end
+
 
 --[[===== FINALIZE =====]]
 
