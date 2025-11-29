@@ -30,7 +30,7 @@ function ToggleUI.Create(window)
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(0.97, 0, 0.5, 0)
 	button.Size = UDim2.new(0.031, 0, 0.056, 0)
-	button.BackgroundColor3 = Color3.fromRGB(255, 115, 230)
+	button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	button.Image = "rbxassetid://140413750237602"
 	button.BorderSizePixel = 0
 	button.AutoButtonColor = true
