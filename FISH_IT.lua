@@ -657,25 +657,37 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     --// AUTO TELEPORT TO SAVED Position
     task.spawn(function()
         while task.wait(1) do
-            if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then
-                continue -- skip loop kalau karakter belum siap
+            if not hrp then continue end
+            
+            -- Helper convert
+            local function GetPos(v)
+                return typeof(v) == "CFrame" and v.Position or v
             end
 
-            local HumanoidRootPart = Player.Character.HumanoidRootPart
-
+            -- AUTO TP POSITION
             if Config.AutoTPPosition and Config.SelectedPosition then
-                if (HumanoidRootPart.Position - Config.SelectedPosition.Position).Magnitude > 1 then
-                    HumanoidRootPart.CFrame = Config.SelectedPosition
+                local targetPos = GetPos(Config.SelectedPosition)
+
+                if (hrp.Position - targetPos).Magnitude > 1 then
+                    hrp.CFrame = typeof(Config.SelectedPosition) == "CFrame"
+                        and Config.SelectedPosition
+                        or CFrame.new(Config.SelectedPosition)
                 end
             end
 
+            -- AUTO TP SPOT
             if Config.AutoTPSpot and Config.SelectedSpot then
-                if (HumanoidRootPart.Position - Config.SelectedSpot.Position).Magnitude > 1 then
-                    HumanoidRootPart.CFrame = Config.SelectedSpot
+                local targetPos = GetPos(Config.SelectedSpot)
+
+                if (hrp.Position - targetPos).Magnitude > 1 then
+                    hrp.CFrame = typeof(Config.SelectedSpot) == "CFrame"
+                        and Config.SelectedSpot
+                        or CFrame.new(Config.SelectedSpot)
                 end
             end
         end
     end)
+
 
     --// AUTO SYNC PLAYER MOVEMENT SETTINGS
     task.spawn(function()
