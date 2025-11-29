@@ -758,14 +758,39 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
     Window:OnDestroy(function() Cleanup() end)
 
+    Window:CreateTopbarButton("", "x",    function() 
+        Window:Dialog({ Icon = "rbxassetid://14446997892", Title = "Close Confirmation", Content = "Are you sure you want to close gui?",
+            Buttons = {
+                {
+                    Title = "Confirm",
+                    Variant = "Primary",
+                    Callback = function()
+                        Window:Destroy()
+                    end,
+                },
+                {
+                    Title = "Cancel",
+                    Variant = "Secondary",
+                    Callback = function()
+                    end,
+                },
+            },
+        })
+    end,  990)
+
+    Window:CreateTopbarButton("", "minus",    function() 
+        Window:Toggle()
+    end,  989)
+    
+
 
 --
 
 -- ABOUT TAB
-    local AboutTab = Window:Tab({Title = "About", Icon = "rbxassetid://127110909372919"})
-    AboutTab:Select()
+    local InfoTab = Window:Tab({Title = "Information", Icon = "circle-alert"})
+    InfoTab:Select()
 
-    local aboutParagraph = AboutTab:Paragraph({
+    local aboutParagraph = InfoTab:Paragraph({
         Title = "Hello, " .. Player.Name .. " 👋",
         Desc = (('<font color="#ffcc00">Level:</font> %s<br/><font color="#ffcc00">Caught:</font> %s<br/><font color="#ffcc00">Rarest Fish:</font> %s'):format(getLevel(),stat("Caught"),stat("Rarest Fish"))),
         Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420),
@@ -781,8 +806,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         end
     end
 
-    AboutTab:Space()
-    AboutTab:Button({
+    InfoTab:Space()
+    InfoTab:Button({
         Title = "Copy Discord Link",
         Icon = "link",
         Callback = function()
@@ -793,7 +818,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- MAIN TAB 
-    local MainTab = Window:Tab({Title = "Main", Icon = "rbxassetid://11234889811"})
+    local MainTab = Window:Tab({Title = "Main", Icon = "landmark"})
 
     -- AUTO FISH SECTION
     local AutoFishSection = MainTab:Section({Title = "Auto Fish", Opened = true})
@@ -926,7 +951,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- QUEST TAB
-    local QuestTAB = Window:Tab({Title = "Quest", Icon = "rbxassetid://79837430697255"})
+    local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
 
     QuestTAB:Section({Title = "Quest Proggress", Opened = true})
     QuestTAB:Button({
@@ -949,7 +974,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- PLAYER TAB
-    local PlayerTab = Window:Tab({Title = "Player", Icon = "rbxassetid://1921610794"})
+    local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
 
     local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
     MovementSection:Slider({
@@ -1051,7 +1076,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 
 -- SHOP TAB
 
-    local ShopTab = Window:Tab({Title = "Shop", Icon = "rbxassetid://11108505392"})
+    local ShopTab = Window:Tab({Title = "Shop", Icon = "shopping-cart"})
 
     local Shop = {
         ["Bait"] = {
@@ -1251,7 +1276,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- TELEPORT TAB
-    local TeleportTab = Window:Tab({Title = "Teleport", Icon = "rbxassetid://11480345094"})
+    local TeleportTab = Window:Tab({Title = "Teleport", Icon = "map-pin"})
 
     -- FISHING ZONE
     local FishingZoneSection = TeleportTab:Section({Title = "Teleport to Spots & Auto Teleport", Opened = true})
@@ -1431,7 +1456,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 --
 
 -- Misc TAB 
-    local MiscTab = Window:Tab({Title = "Misc", Icon = "rbxassetid://3275025860"})
+    local MiscTab = Window:Tab({Title = "Misc", Icon = "layout-dashboard"})
 
     -- GAME SETTINGS
     local GameSection = MiscTab:Section({Title = "Game Settings", Opened = true})
