@@ -4,6 +4,8 @@
  @uniquadev - 2025
 =============================================]]
 
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -13,9 +15,9 @@ if not gui then
 	gui = Instance.new("ScreenGui")
 end
 
-local Module = {}
+local ToggleUI = {}
 
-function Module.Init(window)
+function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
 	-- UI utama toggle button (selalu aktif)
@@ -64,7 +66,7 @@ function Module.Init(window)
 		end
 	end)
 
-	game.UserInputService.InputChanged:Connect(function(input)
+	UIS.InputChanged:Connect(function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - dragStart
 			button.Position = UDim2.new(
@@ -74,12 +76,24 @@ function Module.Init(window)
 		end
 	end)
 
+	-- Klik toggle WindUI window
 	button.MouseButton1Click:Connect(function()
 		window:Toggle()
 	end)
-	
+
+	if window.OnDestroy then
+		window:OnDestroy(function()
+			gui.Enabled = false
+		end)
+	end
+
 	return gui
 end
 
+function ToggleUI.Destroy()
+	if gui then
+		gui.Enabled = false
+	end
+end
 
-return Module
+return ToggleUI
