@@ -10,16 +10,18 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-for _, obj in ipairs(PlayerGui:GetChildren()) do
-	if obj.Name == "PhoenixHUB" and obj:IsA("ScreenGui") then 
-		obj:Destroy()
-	end
-end
-
 local ToggleUI = {}
 
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
+
+
+	for _, obj in ipairs(PlayerGui:GetChildren()) do
+		if obj.Name == "PhoenixHUB" and obj:IsA("ScreenGui") then 
+			obj:Destroy()
+		end
+	end
+
 
 	-- UI utama toggle button (selalu aktif)
 	local gui = Instance.new("ScreenGui")
