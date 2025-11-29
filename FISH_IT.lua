@@ -655,38 +655,17 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     end)
 
     --// AUTO TELEPORT TO SAVED Position
-    task.spawn(function()
-        while task.wait(1) do
-            if not hrp then continue end
-            
-            -- Helper convert
-            local function GetPos(v)
-                return typeof(v) == "CFrame" and v.Position or v
-            end
-
-            -- AUTO TP POSITION
-            if Config.AutoTPPosition and Config.SelectedPosition then
-                local targetPos = GetPos(Config.SelectedPosition)
-
-                if (hrp.Position - targetPos).Magnitude > 1 then
-                    hrp.CFrame = typeof(Config.SelectedPosition) == "CFrame"
-                        and Config.SelectedPosition
-                        or CFrame.new(Config.SelectedPosition)
-                end
-            end
-
-            -- AUTO TP SPOT
-            if Config.AutoTPSpot and Config.SelectedSpot then
-                local targetPos = GetPos(Config.SelectedSpot)
-
-                if (hrp.Position - targetPos).Magnitude > 1 then
-                    hrp.CFrame = typeof(Config.SelectedSpot) == "CFrame"
-                        and Config.SelectedSpot
-                        or CFrame.new(Config.SelectedSpot)
-                end
-            end
+    while true do
+        task.wait(5)
+        if AutoTPSpot == true then
+            hrp.CFrame = SelectedSpot
         end
-    end)
+
+        if AutoTPPosition == true then
+            hrp.CFrame = SelectedPosition
+        end
+
+    end
 
 
     --// AUTO SYNC PLAYER MOVEMENT SETTINGS
@@ -1343,6 +1322,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Title = "Teleport & Freeze at Selected Spot",
         Default = Config.AutoTPSpot,
         Callback = function(state)
+            if SelectedSpot == nil then return Notify("Auto Teleport", "You need to select the spot first") end
             Config.AutoTPSpot = state
             if state then
                 Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
@@ -1357,6 +1337,8 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Title = "Auto Teleport to Saved Position",
         Default = Config.AutoTPPosition,
         Callback = function(state)
+            if SelectedPosition == nil then return Notify("Auto Teleport", "You need to set/save position first") end
+
             Config.AutoTPPosition = state
             if state then
                 Notify("Teleport", "Auto Teleport to Saved Position is now enabled.", "map-pin")
