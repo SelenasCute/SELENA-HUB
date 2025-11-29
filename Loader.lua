@@ -1,5 +1,5 @@
 --[[ VARIABLE & SERVICES ]]
-local icon = "rbxassetid://112969347193102"
+local icon = "rbxassetid://140413750237602"
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local MarketplaceService = game:GetService("MarketplaceService")
