@@ -10,14 +10,17 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
+local gui = PlayerGui:FindFirstChild("PhoenixHUB")
+if not gui then
+	gui = Instance.new("ScreenGui")
+end
+
 local ToggleUI = {}
 
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
 	-- UI utama toggle button (selalu aktif)
-	local gui
-	gui = Instance.new("ScreenGui")
 	gui.Name = "PhoenixHUB"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -101,10 +104,8 @@ function ToggleUI.Create(window)
 end
 
 function ToggleUI.Destroy()
-	for _, gui in ipairs(PlayerGui:GetChildren()) do
-		if gui.Name == "PhoenixHUB" and gui:IsA("ScreenGui") then
-			gui:Destroy()
-		end
+	if gui then
+		gui.Enabled = false
 	end
 end
 
