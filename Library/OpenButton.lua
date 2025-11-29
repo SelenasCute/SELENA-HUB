@@ -81,22 +81,9 @@ function ToggleUI.Create(window)
 		window:Toggle()
 	end)
 
-	-- Event Open/Close
-	if window.OnOpen then
-		window:OnOpen(function()
-			-- tidak perlu apa-apa, tombol tetap aktif
-		end)
-	end
-
-	if window.OnClose then
-		window:OnClose(function()
-			-- UI tetap ada, tidak disable
-		end)
-	end
-
 	if window.OnDestroy then
 		window:OnDestroy(function()
-			gui:Destroy()
+			gui.Enabled = false()
 		end)
 	end
 
