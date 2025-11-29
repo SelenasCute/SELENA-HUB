@@ -11,13 +11,13 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 local ToggleUI = {}
-
+local gui
 function ToggleUI.Create(window)
 	assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
 
 	--[[ UI ]]--
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "SelenaHub_Toggle"
+	gui = Instance.new("ScreenGui")
+	gui.Name = "PhoenixHUB"
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = PlayerGui
@@ -138,6 +138,10 @@ function ToggleUI.Create(window)
 	end
 
 	return gui
+end
+
+function ToggleUI.Destroy()
+	gui:Destroy()
 end
 
 return ToggleUI
