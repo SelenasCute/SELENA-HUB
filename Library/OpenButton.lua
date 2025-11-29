@@ -19,9 +19,6 @@ function ToggleUI.Create(window)
 			Existed:Destroy()
 		end
 	end
-	if Existed then
-		Existed:Destroy()
-	end
 
 	--[[ UI ]]--
 	local gui = Instance.new("ScreenGui")
