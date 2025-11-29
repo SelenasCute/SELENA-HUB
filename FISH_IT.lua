@@ -795,7 +795,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     Modules.OpenButton.Create(Window)
     Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
-    Window:OnDestroy(function() myConfig:Save(); Cleanup() end)
+    Window:OnDestroy(function()  end)
 
     local ConfigManager = Window.ConfigManager
     local myConfig = ConfigManager:CreateConfig("Default") -- will be saved as config1.json
@@ -808,6 +808,9 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
                     Variant = "Primary",
                     Callback = function()
                         Window:Destroy()
+                        myConfig:Save()
+                        Cleanup()
+                        Modules.OpenButton.Destroy()
                     end,
                 },
                 {
