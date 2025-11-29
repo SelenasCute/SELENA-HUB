@@ -83,7 +83,7 @@ function ToggleUI.Create(window)
 
 	if window.OnDestroy then
 		window:OnDestroy(function()
-			gui.Enabled = false()
+			gui.Enabled = false
 		end)
 	end
 
