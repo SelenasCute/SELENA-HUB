@@ -96,7 +96,11 @@ end
 
 function ToggleUI.Destroy()
 	if gui then
-		gui.Enabled = false
+		for _, obj in ipairs(PlayerGui:GetChildren()) do
+			if obj.Name == "PhoenixHUB" and obj:IsA("ScreenGui") then 
+				obj:Destroy()
+			end
+		end
 	end
 end
 
