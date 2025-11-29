@@ -85,8 +85,8 @@ if url then
     end)
     local gName = ok and info.Name or "Unknown Game"
 
-    print("Selena HUB | Game Detected:", gName)
-    Notif("Selena HUB", "Loading " .. gName .. "...")
+    print("Phoenix HUB | Game Detected:", gName)
+    Notif("Phoenix HUB", "Loading " .. gName .. "...")
 
     task.wait(1)
 
@@ -95,12 +95,12 @@ if url then
     end)
 
     if okLoad then
-        Notif("Selena HUB", "Successfully Loaded " .. gName)
+        Notif("Phoenix HUB", "Successfully Loaded " .. gName)
     else
-        Notif("Selena HUB", "Error: Failed to Load Script")
+        Notif("Phoenix HUB", "Error: Failed to Load Script")
         warn("❌ Load Error:", err)
     end
 else
-    warn("⚠️ Selena HUB | Game Not Supported:", id)
-    Notif("Selena HUB", "This Game is Not Supported")
+    warn("⚠️ Phoenix HUB | Game Not Supported:", id)
+    Notif("Phoenix HUB", "This Game is Not Supported")
 end

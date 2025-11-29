@@ -4,13 +4,13 @@
 --                      Enhanced Config Manager
 -- ====================================================================
 
-local GAME = "Phoenix HUB | Fish It"
+local GAME = "PHOENIX HUB | Fish It"
 local VERSION = 1.2
 local LATEST_UPDATE = "11/8/2025"
 local DISCORD_LINK = "dsc.gg/selena-hub"
 
 --[[===== DEPENDENCY CHECKS =====]]
-    local existingWindow = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("SelenaHUB_UI_Window")
+    local existingWindow = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("PhoenixHUB_UI_Window")
     if existingWindow then
         existingWindow:Destroy()
     end
@@ -735,9 +735,9 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     local Window = WindUI:CreateWindow({
         Title = GAME,
         Icon = "rbxassetid://140413750237602",
-        Name = "SelenaHUB_UI_Window",
-        Author = "Discord.gg/selenaHub",
-        Folder = "Selenahub",
+        Name = "PhoenixHUB_UI_Window",
+        Author = "Discord.gg/PhoenixHUB",
+        Folder = "PhoenixHUB",
         NewElements = true,
         Size = UDim2.fromOffset(590, 350),
         MinSize = Vector2.new(560, 330),
