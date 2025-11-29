@@ -753,7 +753,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Theme = "Theme_1",
     })
 
-    Window:EditOpenButton({
+    --[[Window:EditOpenButton({
         Enabled = false,
     })
 
@@ -761,7 +761,7 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
     Window:OnDestroy(function()
         Cleanup()
         Modules.OpenButton.Destroy()
-    end)
+    end)]]
 
     Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
 --
