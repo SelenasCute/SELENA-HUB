@@ -753,16 +753,12 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
         Theme = "Theme_1",
     })
 
-    Window:EditOpenButton({
-        Enabled = false,
-    })
-
     Modules.OpenButton.Create(Window)
-    Window:OnDestroy(function()
-        Cleanup()
-    end)
-
     Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
+    Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
+    Window:OnDestroy(function() Cleanup() end)
+
+
 --
 
 -- ABOUT TAB
