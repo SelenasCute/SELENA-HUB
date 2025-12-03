@@ -1,570 +1,87 @@
--- ====================================================================
---                      Selena HUB | Fish it
---                      Last Update 11/4/2025
--- ====================================================================
+--[[<<===== MAIN UI INITIALIZATION =====>>]]
 
---[[]]
-local GAME = "Selena HUB | Fish It"
-local VERSION = 1.1
-local DISCORD_LINK = "discord.gg/selenahub"
+    local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+    WindUI:AddTheme({
+        Name = "Theme_1",
+        Button = Color3.fromHex("#6b31ff"),      
+    })
 
--- ====== CRITICAL DEPENDENCY VALIDATION ======
-local success, errorMsg = pcall(function()
-    local services = {
-        game = game,
-        workspace = workspace,
-        Players = game:GetService("Players"),
-        RunService = game:GetService("RunService"),
-        ReplicatedStorage = game:GetService("ReplicatedStorage"),
-        HttpService = game:GetService("HttpService")
-    }
+
+    local Window = WindUI:CreateWindow({
+        Title = GAME,
+        Icon = LOGO,
+        Name = "PhoenixHUB_UI_Window",
+        Author = "Version 1.3",
+        Folder = "PhoenixHUB",
+        NewElements = true,
+        Size = UDim2.fromOffset(590, 350),
+        MinSize = Vector2.new(560, 330),
+        MaxSize = Vector2.new(620, 370),
+        HideSearchBar = false,
+        Transparent = false,
+        Theme = "Dark",
+        Resizable = true,
+        SideBarWidth = 200,
+        --BackgroundTransparency = 0.,
+        --Background = "rbxassetid://138742999874945",
+        --BackgroundImageTransparency = 0.95,
+        Theme = "Theme_1",
+    })
+
+    Modules.OpenButton.Create(Window)
+    Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00")})
+    Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
+    Window:OnDestroy(function()  end)
+
+    local ConfigManager = Window.ConfigManager
+    local myConfig = ConfigManager:CreateConfig("Default") -- will be saved as config1.json
+
+    Window:CreateTopbarButton("", "x",    function() 
+        Window:Dialog({ Icon = "rbxassetid://14446997892", Title = "Close Confirmation", Content = "Are you sure you want to close gui?",
+            Buttons = {
+                {
+                    Title = "Confirm",
+                    Variant = "Primary",
+                    Callback = function()
+                        Window:Destroy()
+                        myConfig:Save()
+                        Cleanup()
+                        Modules.OpenButton.Destroy()
+                    end,
+                },
+                {
+                    Title = "Cancel",
+                    Variant = "Secondary",
+                    Callback = function()
+                    end,
+                },
+            },
+        })
+    end,  990)
+
+    Window:CreateTopbarButton("", "minus",    function() 
+        Window:Toggle()
+    end,  989)
     
-    for serviceName, service in pairs(services) do
-        if not service then
-            error("Critical service missing: " .. serviceName)
-        end
-    end
+    myConfig:Load()
+
+--
+
+-- INFORMATION TAB
+    local InfoTab = Window:Tab({Title = "Information", Icon = "circle-alert"})
+    InfoTab:Select()
     
-    local LocalPlayer = game:GetService("Players").LocalPlayer
-    if not LocalPlayer then
-        error("LocalPlayer not available")
-    end
-    
-    return true
-end)
-
-if not success then
-    error("❌ [Auto Fish] Critical dependency check failed: " .. tostring(errorMsg))
-    return
-end
-
--- ====================================================================
---                        CORE SERVICES
--- ====================================================================
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
-local LocalPlayer = Players.LocalPlayer
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local RootPart = Character:WaitForChild("HumanoidRootPart")
-local leaderstats = Player:FindFirstChild("leaderstats")
-
--- ====================================================================
---                        MODULES
--- ====================================================================
-local Modules = {
-    Player = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Player.lua"))(),
-}
--- ====================================================================
---                        CONFIGURATION
--- ====================================================================
-
-local DefaultConfig = {
-    LockBaseESP = false,
-}
-
-local Config = {}
-for k, v in pairs(DefaultConfig) do Config[k] = v end
-
-
--- ====================================================================
---                     NOTIFICATION
--- ====================================================================
-
-local function Notify(title: string, content: string, icon: string, duration: number)
-    return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
-end
-
--- ====================================================================
---                     NETWORK EVENTS
--- ====================================================================
-local function getNetworkEvents()
-
-end
-
-local Events = getNetworkEvents()
-
--- ====================================================================
---                     TELEPORT SYSTEM (from dev1.lua)
--- ====================================================================
-local Teleport = {}
-
-function Teleport.to(locationName)
-    local cframe = LOCATIONS[locationName]
-    if not cframe then
-        warn("❌ [Teleport] Location not found: " .. tostring(locationName))
-        return false
-    end
-    
-    local success = pcall(function()
-        local character = LocalPlayer.Character
-        if not character then return end
-        
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart then return end
-        
-        rootPart.CFrame = cframe
-        print("✅ [Teleport] Moved to " .. locationName)
-    end)
-    
-    return success
-end
-
-
--- ====================================================================
---                        SETTINGS
--- ====================================================================
-
--- // 🔔 NOTIFY HANDLER
-local function NotifySafe(title, content, icon)
-	if Notify then
-		Notify(title, content, icon)
-	else
-		warn(("[Notify] %s: %s"):format(title, content))
-	end
-end
-
--- // 💥 DESTROY UI
-local function DestroyUI()
-	if Window and type(Window.Destroy) == "function" then
-		Window:Destroy()
-		NotifySafe("UI Closed", "Successfully destroyed WindUI interface.", "shield-off")
-	else
-		NotifySafe("Error", "UI window not found or already closed.", "xmark")
-	end
-end
-
--- // 🔁 REJOIN SERVER
-local function RejoinServer()
-	NotifySafe("Rejoining", "Rejoining current server...", "refresh-cw")
-	task.wait(1)
-	game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
-end
-
--- // 💤 ANTI AFK
-local AntiAFKConnection
-local function ToggleAntiAFK(state)
-	local vu = game:GetService("VirtualUser")
-	local player = game.Players.LocalPlayer
-
-	if state then
-		NotifySafe("Anti AFK", "Enabled Anti AFK system.", "check")
-		AntiAFKConnection = player.Idled:Connect(function()
-			vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-			task.wait(1)
-			vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-		end)
-	else
-		NotifySafe("Anti AFK", "Disabled Anti AFK system.", "xmark")
-		if AntiAFKConnection then
-			AntiAFKConnection:Disconnect()
-			AntiAFKConnection = nil
-		end
-	end
-end
-
-local function DestroyUI()
-	if Window and type(Window.Destroy) == "function" then
-		Window:Destroy()
-		Notify("UI Closed", "Successfully destroyed WindUI interface.", "shield-off")
-	else
-		Notify("Error", "UI window not found or already closed.", "xmark")
-	end
-end
-
-local function RejoinServer()
-	Notify("Rejoining", "Rejoining current server...", "refresh-cw")
-	task.wait(0.5)
-	game:GetService("TeleportService"):Teleport(game.PlaceId)
-end
-
-local function ToggleFPSBoost(state)
-    Config.FPSBoost = state
-    local Terrain = workspace:FindFirstChildOfClass("Terrain")
-    if state then
-        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-                pcall(function() v.Enabled = false end)
-            end
-        end
-        if Terrain then
-            Terrain.WaterWaveSize = 0
-            Terrain.WaterWaveSpeed = 0
-            Terrain.WaterReflectance = 0
-            Terrain.WaterTransparency = 0
-        end
-    else
-        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-                pcall(function() v.Enabled = true end)
-            end
-        end
-        if Terrain then
-            Terrain.WaterWaveSize = 0.05
-            Terrain.WaterWaveSpeed = 8
-            Terrain.WaterReflectance = 1
-            Terrain.WaterTransparency = 0.3
-        end
-    end
-end
-
-local AntiAFKConnection
-local function ToggleAntiAFK(state)
-	Config.AntiAFK = state
-	local vu = game:GetService("VirtualUser")
-	local player = game.Players.LocalPlayer
-
-	if state then
-		AntiAFKConnection = player.Idled:Connect(function()
-			vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-			task.wait(1)
-			vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-		end)
-	else
-		if AntiAFKConnection then
-			AntiAFKConnection:Disconnect()
-			AntiAFKConnection = nil
-		end
-	end
-end
-
-local function ToggleLowGraphics(state)
-    Config.LowGraphics = state
-    if state then
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("UnionOperation") then
-                pcall(function() v.Material = Enum.Material.SmoothPlastic; v.Reflectance = 0 end)
-            end
-            if v:IsA("Decal") or v:IsA("Texture") then pcall(function() v.Transparency = 1 end) end
-        end
-    else
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Decal") or v:IsA("Texture") then pcall(function() v.Transparency = 0 end) end
-        end
-    end
-end
-
-local blackFrame
-local function Toggle3DRenderingDisable(state)
-    Config.Disable3DRendering = state
-    if state then
-        RunService:Set3dRenderingEnabled(false)
-        if not blackFrame then
-            local gui = Instance.new("ScreenGui")
-            gui.Name = "BlackoutGui"
-            gui.ResetOnSpawn = false
-            gui.IgnoreGuiInset = true
-            gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-            gui.DisplayOrder = -99999
-            gui.Parent = Player:WaitForChild("PlayerGui")
-
-            -- FRAME
-            blackFrame = Instance.new("Frame")
-            blackFrame.Size = UDim2.new(1, 0, 1, 0)
-            blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
-            blackFrame.BorderSizePixel = 0
-            blackFrame.BackgroundTransparency = 0
-            blackFrame.ZIndex = 0
-            blackFrame.Parent = gui
-
-            -- TEXT
-            local v1 = Instance.new("TextLabel")
-            v1.Size = UDim2.new(0.7, 0, 0.7, 0)
-            v1.AnchorPoint = Vector2.new(0.5, 0.5)
-            v1.Position = UDim2.new(0.5, 0, 0.5, 0)
-            v1.BackgroundTransparency = 1
-            v1.Text = "SELENA HUB"
-            v1.TextColor3 = Color3.fromRGB(255, 255, 255)
-            v1.TextScaled = true
-            v1.Font = Enum.Font.GothamBold -- font tebal & modern
-            v1.ZIndex = 1
-            v1.Parent = blackFrame
-
-        else
-            blackFrame.Visible = true
-        end
-    else
-        RunService:Set3dRenderingEnabled(true)
-        if blackFrame then blackFrame.Visible = false end
-    end
-end
-
-local function SetToggleKey(key)
-	Window:SetToggleKey(Enum.KeyCode[key])
-	Notify("UI Toggle", "UI toggle key set to " .. key, "keyboard")
-end
-
--- ====================================================================
---                         //NOTE MAIN UI
--- ====================================================================
-
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-local OpenButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Library/OpenButton.lua"))()
-local Window = WindUI:CreateWindow({
-    Title = GAME,
-    Icon = "rbxassetid://112969347193102",
-    Author = "Discord.gg/selenaHub",
-    Folder = "Selenahub",
-    NewElements = true,
-    Size = UDim2.fromOffset(590, 350),
-    MinSize = Vector2.new(560, 330),
-    MaxSize = Vector2.new(620, 370),
-    HideSearchBar = false,
-    Transparent = false,
-    Theme = "Dark",
-    Resizable = true,
-    SideBarWidth = 200,
-    Background = "rbxassetid://138742999874945",
-    BackgroundImageTransparency = 0.9,
-})
-OpenButton.Create(Window)
-Window:Tag({Title = "v" .. VERSION, Icon = "github", Color = Color3.fromHex("#6b31ff")})
-local function Notify(title: string, content: string, icon: string, duration: number)
-    duration = duration or 3
-    return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
-end
-
-Notify("Selena HUB Executed", "Press [RightShift] to open/close UI", "check")
-
--- ====================================================================
---                         //ANCHOR ABOUT TAB
--- ==================================================================== //tab1
-local AboutTab = Window:Tab({Title = "About", Icon = "info"})
-AboutTab:Select()
-
-local aboutParagraph = AboutTab:Paragraph({
-    Title = "Hello, " .. Player.Name .. " 👋", 
-    Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420), 
-    ImageSize = 70, 
-    Locked = false
-})
-
-local DiscordSection = AboutTab:Section({Title = "Join our discord", Opened = true})
-DiscordSection:Button({Title = "Copy Discord Link", Icon = "link", Color = Color3.fromHex("#5865F2"), Callback = CopyDiscordLink})
-
--- ====================================================================
---                         //ANCHOR MAIN TAB
--- ==================================================================== //tab2
-local MainTab = Window:Tab({Title = "Main", Icon = "house"})
-
--- ====================================================================
---                         //ANCHOR VISUAL TAB
--- ==================================================================== //tab4 //TODO 
-local VisualTab = Window:Tab({Title = "Visual", Icon = "eye"})
-local ESPSection = VisualTab:Section({Title = "ESP", Opened = true})
-
-local function ToggleBaseESP(state)
-    Config.LockBaseESP = state
-
-    if state then
-        Notify("Lock Base ESP", "Enabled Lock Base ESP", "check")
-
-        for _, obj in ipairs(workspace:GetChildren()) do
-            if obj.Name == "Base" then
-                local laser = obj:FindFirstChild("Lasers")
-                if laser and laser:FindFirstChild("LockTimer") then
-                    local u1 = laser.LockTimer
-
-                    -- pastikan itu BillboardGui atau Highlight
-                    if u1:IsA("BillboardGui") then
-                        u1.Size = UDim2.new(5, 0, 5, 0) -- perbesar 5x
-                        u1.AlwaysOnTop = true
-                        u1.MaxDistance = math.huge
-                    elseif u1:IsA("Highlight") then
-                        u1.FillTransparency = 0.3
-                        u1.OutlineTransparency = 0
-                        u1.FillColor = Color3.new(1, 0.4, 0.4)
-                        u1.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                    end
-                end
-            end
-        end
-
-    else
-        Notify("Lock Base ESP", "Disabled Lock Base ESP", "xmark")
-
-        -- reset ke normal
-        for _, obj in ipairs(workspace:GetChildren()) do
-            if obj.Name == "Base" then
-                local laser = obj:FindFirstChild("Lasers")
-                if laser and laser:FindFirstChild("LockTimer") then
-                    local u1 = laser.LockTimer
-
-                    if u1:IsA("BillboardGui") then
-                        u1.Size = UDim2.new(1, 0, 1, 0)
-                        u1.AlwaysOnTop = false
-                        u1.MaxDistance = 50
-                    elseif u1:IsA("Highlight") then
-                        u1.FillTransparency = 0.6
-                        u1.OutlineTransparency = 0.4
-                        u1.DepthMode = Enum.HighlightDepthMode.Occluded
-                    end
-                end
-            end
-        end
-    end
-end
-
-local ESPPlayers = {}
-
-local function TogglePlayerESP(state)
-    Config.PlayerESP = state
-
-    if state then
-        Notify("Player ESP", "Enabled Player ESP", "eye")
-
-        for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
-            if plr ~= game.Players.LocalPlayer then
-                local char = plr.Character or plr.CharacterAdded:Wait()
-                if char then
-                    local highlight = Instance.new("Highlight")
-                    highlight.Name = "PlayerESP"
-                    highlight.Adornee = char
-                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                    highlight.FillColor = Color3.fromRGB(100, 200, 255)
-                    highlight.FillTransparency = 0.4
-                    highlight.OutlineTransparency = 0
-                    highlight.Parent = char
-
-                    ESPPlayers[plr] = highlight
-                end
-            end
-        end
-
-        -- Tambahkan ESP saat ada player baru join
-        game.Players.PlayerAdded:Connect(function(plr)
-            if Config.PlayerESP then
-                plr.CharacterAdded:Connect(function(char)
-                    local highlight = Instance.new("Highlight")
-                    highlight.Name = "PlayerESP"
-                    highlight.Adornee = char
-                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                    highlight.FillColor = Color3.fromRGB(255, 0, 255)
-                    highlight.FillTransparency = 0.4
-                    highlight.OutlineTransparency = 0
-                    highlight.Parent = char
-
-                    ESPPlayers[plr] = highlight
-                end)
-            end
-        end)
-
-    else
-        Notify("Player ESP", "Disabled Player ESP", "xmark")
-
-        for plr, esp in pairs(ESPPlayers) do
-            if esp and esp.Parent then
-                esp:Destroy()
-            end
-        end
-        ESPPlayers = {}
-    end
-end
-
-ESPSection:Toggle({
-    Flag = "LockBaseESP",
-    Title = "Lock Base ESP",
-    Default = false,
-    Callback = function(state)
-        ToggleBaseESP(state)
-    end
-})
-ESPSection:Toggle({
-    Flag = "PlayerESP",
-    Title = "Player ESP",
-    Default = false,
-    Callback = function(state)
-        TogglePlayerESP(state)
-    end
-})
-
-
-
--- ====================================================================
---                         //ANCHOR PLAYER TAB
--- ==================================================================== //tab4
-local PlayerTab = Window:Tab({Title = "Player", Icon = "user"})
-
-local MovementSection = PlayerTab:Section({Title = "Movement", Opened = true})
-MovementSection:Slider({Flag = "SpeedSlider", Title = "Walk Speed", Step = 1, Value = {Min = 16, Max = 200, Default = Config.WalkSpeed}, 
-    Callback = function(value)
-        Config.WalkSpeed = value
-        Modules.Player.SetWalkSpeed(value)
-    end
-})
-MovementSection:Space()
-MovementSection:Slider({Flag = "JumpSlider", Title = "Jump Power", Step = 1, Value = {Min = 50, Max = 300, Default = Config.JumpPower}, 
-    Callback = function(value)
-        Config.JumpPower = value
-        Modules.Player.SetJumpPower(value)
-    end
-})
-MovementSection:Space()
-MovementSection:Toggle({Flag = "InfiniteJumpToggle", Title = "Infinite Jump", Default = Config.InfiniteJump, 
-    Callback = function(state)
-        Config.InfiniteJump = state
-        Modules.Player.ToggleInfiniteJump(state)
-    end
-})
-MovementSection:Space()
-MovementSection:Toggle({Flag = "NoClipToggle", Title = "NoClip", Default = Config.NoClip, 
-    Callback = function(state)
-        Config.NoClip = state
-        Modules.Player.ToggleNoClip(state)
-    end
-})
-MovementSection:Space()
-MovementSection:Toggle({Flag = "WalkOnWaterToggle", Title = "Walk on Water", Default = Config.WalkOnWater, 
-    Callback = function(state)
-        Config.WalkOnWater = state
-        Modules.Player.ToggleWalkOnWater(state)
-    end
-})
-
-local FlySection = PlayerTab:Section({Title = "Fly", Opened = true})
-FlySection:Toggle({Flag = "Fly", Title = "Toggle Fly", Default = Config.Fly, 
-    Callback = function(state)
-        Config.Fly = state
-        Modules.Player.ToggleFly(state)
-    end
-})
-FlySection:Space()
-FlySection:Slider({Flag = "FlySlider", Title = "Set Fly Speed", Step = 1, Value = {Min = 50, Max = 300, Default = Config.FlySpeed}, 
-    Callback = function(value)
-        Config.FlySpeed = value
-        Modules.Player.SetFlySpeed(value)
-    end
-})
-FlySection:Space()
-FlySection:Button({Flag = "FlyMobile", Title = "Fly Gui", Desc = "Fly gui work for all device", Callback = function() 
-    Notify("Fly UI", "Opening Fly ui")
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/RealBatu20/AI-Scripts-2025/refs/heads/main/FlyGUI_v7.lua", true))() 
-end})
-
--- ====================================================================
---                         //ANCHOR SETTINGS TAB
--- ==================================================================== //tab5
-
-local SettingsTab = Window:Tab({Title = "Settings", Icon = "settings"})
-
--- UI SETTINGS
-local UISection = SettingsTab:Section({Title = "UI Settings", Opened = true})
-UISection:Keybind({Flag = "UIKeybind", Title = "UI Toggle Key", Value = "RightShift", Callback = SetToggleKey})
-UISection:Space()
-UISection:Button({Title = "Destroy UI", Icon = "shield-off", Callback = DestroyUI})
-
--- GAME SETTINGS
-local GameSection = SettingsTab:Section({Title = "Game Settings", Opened = true})
-GameSection:Toggle({Flag = "FPSBoostToggle", Title = "FPS Boost", Default = Config.FPSBoost, Callback = ToggleFPSBoost})
-GameSection:Space()
-GameSection:Toggle({Flag = "LowGraphicToggle", Title = "Low Graphics", Default = Config.LowGraphics, Callback = ToggleLowGraphics})
-GameSection:Space()
-GameSection:Toggle({Flag = "Disable3DRendering", Title = "Disable 3D Rendering", Default = Config.Disable3DRendering, Callback = Toggle3DRenderingDisable})
-GameSection:Space()
-GameSection:Toggle({Flag = "AntiAFKToggle", Title = "Anti AFK", Default = Config.AntiAFK, Callback = ToggleAntiAFK})
+    local JoinDiscordSection = InfoTab:Section({Title = "Join Discord Server Phoenix HUB"})
+    InfoTab:Paragraph({
+        Title = "Phoenix HUB Community",
+        Desc = "Be part of our Community Discord—get new announcements, access support, and chat with other users!",
+        Image = LOGO,        
+        Buttons = {
+            {
+                Icon = "link",
+                Title = "Copy Discord Link",
+                Callback = function() setclipboard(DISCORD_LINK); Notify("Discord Link", "Link copied to clipboard!", "link") end,                
+            }
+        }
+    })
+--
