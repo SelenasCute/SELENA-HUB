@@ -21,6 +21,7 @@ function ToggleUI.Create(window)
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.Parent = playerGui
     gui.Enabled = true
+	gui.IgnoreGuiInset = true
 
     -- Toggle Button
     local button = Instance.new("ImageButton")
@@ -47,6 +48,19 @@ function ToggleUI.Create(window)
     stroke.Color = Color3.fromRGB(255, 255, 255)
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = button
+
+	-- function to resize & reposition button sesuai viewport
+    local function updateButtonSize()
+        local vp = Camera.ViewportSize
+        -- kita buat button seukuran, misalnya 8% dari lebar, 12% dari tinggi (atau sesuaikan)
+        local widthScale = 0.08  -- 8% lebar layar
+        local heightScale = 0.12 -- 12% tinggi layar
+        button.Size = UDim2.new(widthScale, 0, heightScale, 0)
+        button.Position = UDim2.new(0.95, 0, 0.5, 0)
+    end
+
+    updateButtonSize()
+    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateButtonSize)
 
     -- Dragging
     local dragging = false
