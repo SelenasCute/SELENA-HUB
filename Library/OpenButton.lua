@@ -36,7 +36,7 @@ function ToggleUI.Create(window)
 	button.Name = "ToggleButton"
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = UDim2.new(0.97, 0, 0.5, 0)
-	button.Size = UDim2.new(0.031, 0, 0.056, 0)
+	button.Size = UDim2.new(0.065, 0, 0.12, 0)
 	button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	button.Image = "rbxassetid://140413750237602"
 	button.BorderSizePixel = 0
@@ -44,7 +44,7 @@ function ToggleUI.Create(window)
 	button.Parent = gui
 
 	Instance.new("UIAspectRatioConstraint", button).AspectRatio = 1
-	Instance.new("UICorner", button).CornerRadius = UDim.new(0.5, 0)
+	Instance.new("UICorner", button).CornerRadius = UDim.new(0.1, 0)
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Thickness = 3
@@ -80,26 +80,11 @@ function ToggleUI.Create(window)
 		end
 	end)
 
-	-- Klik toggle WindUI window
 	button.MouseButton1Click:Connect(function()
 		window:Toggle()
 	end)
 
-	if window.OnDestroy then
-		window:OnDestroy(function()
-			gui.Enabled = false
-		end)
-	end
-
 	return gui
-end
-
-function ToggleUI.Destroy()
-	for _, obj in ipairs(PlayerGui:GetChildren()) do
-		if obj.Name == "PhoenixHUB" and obj:IsA("ScreenGui") then 
-			obj:Destroy()
-		end
-	end
 end
 
 return ToggleUI
