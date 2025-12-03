@@ -77,6 +77,7 @@ function ToggleUI.Create(window)
 
     -- Toggle action
     button.MouseButton1Click:Connect(function()
+		task.wait(0.5)
         window:Toggle()
     end)
 
