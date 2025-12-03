@@ -46,6 +46,7 @@ function ToggleUI.Create(window)
 
     -- UIGradient untuk stroke (rotasi orange)
 	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(255,255,255)
     stroke.Thickness = 3
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = button
