@@ -1,17 +1,9 @@
---// File: ToggleUI.lua
---[[===========================================
-    Phoenix HUB UI Toggle Module
-    @uniquadev - 2025 (revisi)
-=============================================]]
-
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-
 local ToggleUI = {}
 
 function ToggleUI.Create(window)
     assert(window, "ToggleUI.Create() membutuhkan window WindUI!")
-
+	local UIS = game:GetService("UserInputService")
+	local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
 
@@ -35,7 +27,7 @@ function ToggleUI.Create(window)
     button.Name = "ToggleButton"
     button.AnchorPoint = Vector2.new(0.5, 0.5)
     button.Position = UDim2.new(0.95, 0, 0.5, 0)
-    button.Size = UDim2.new(0.065, 0, 0.12, 0)
+    button.Size = UDim2.new(0.055, 0, 0.12, 0)
     button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     button.Image = "rbxassetid://140413750237602"
     button.BorderSizePixel = 0
@@ -47,7 +39,7 @@ function ToggleUI.Create(window)
     aspect.AspectRatio = 1
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0.1, 0)
+    corner.CornerRadius = UDim.new(0.2, 0)
     corner.Parent = button
 
     local stroke = Instance.new("UIStroke")
