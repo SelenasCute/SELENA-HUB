@@ -84,6 +84,8 @@ local LOGO = "rbxassetid://140413750237602"
         HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
     end)
 
+    HumanoidRootPart.CFrame = CFrame.new(-0.260026217, 9.53157043, 2711.38672, -0.105230443, -2.15196139e-10, -0.994447887, -1.36840261e-09, 1, -7.15960416e-11, 0.994447887, 1.35327105e-09, -0.105230443)
+
 --
 
 --[[===== MODULES =====]]
@@ -735,11 +737,11 @@ local LOGO = "rbxassetid://140413750237602"
             if Config.AutoFishV2 then
                 pcall(function()
                     Events.equip:FireServer(1)
-                    task.wait(0.05)
+                    --task.wait(0.05)
                     Events.charge:InvokeServer(1755848498.4834)
-                    task.wait(0.02)
+                   -- task.wait(0.02)
                     Events.minigame:InvokeServer(1.2854545116425, 1)
-                    task.wait(Config.AutoFishV2Delay)
+                    --task.wait(Config.AutoFishV2Delay)
                     Events.fishing:FireServer()
                 end)
             end
@@ -836,57 +838,104 @@ local LOGO = "rbxassetid://140413750237602"
 
     local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
     WindUI:AddTheme({
-        Name = "Theme_1",
-        Button = Color3.fromHex("#6b31ff"),      
+        Name = "test",
+
+        Accent = Color3.fromHex("#ff8800"),
+        Background = Color3.fromHex("#1a1a1a"),
+        BackgroundTransparency = 0,
+        Outline = Color3.fromHex("#ffffff"),
+        Text = Color3.fromHex("#ffffff"),
+        Placeholder = Color3.fromHex("#b8b8b8"),
+        Button = Color3.fromHex("#ff7300"),
+        Icon = Color3.fromHex("#ffa54d"),
+        
+        Hover = Color3.fromHex("#ffb267"),
+
+        WindowBackground = Color3.fromHex("#181818"),
+        WindowShadow = Color3.fromHex("#000000"),
+
+        DialogBackground = Color3.fromHex("#1a1a1a"),
+        DialogBackgroundTransparency = 0,
+        DialogTitle = Color3.fromHex("#ffffff"),
+        DialogContent = Color3.fromHex("#ffffff"),
+        DialogIcon = Color3.fromHex("#ffa54d"),
+
+        WindowTopbarButtonIcon = Color3.fromHex("#ffa54d"),
+        WindowTopbarTitle = Color3.fromHex("#ffffff"),
+        WindowTopbarAuthor = Color3.fromHex("#ff8800"),
+        WindowTopbarIcon = Color3.fromHex("#ffffff"),
+
+        TabBackground = Color3.fromHex("#ff8800"),
+        TabTitle = Color3.fromHex("#ffffff"),
+        TabIcon = Color3.fromHex("#ffa54d"),
+
+        ElementTitle = Color3.fromHex("#ffffff"),
+        ElementDesc = Color3.fromHex("#ffffff"),
+        ElementIcon = Color3.fromHex("#ffa54d"),
+
+        PopupBackground = Color3.fromHex("#1a1a1a"),
+        PopupBackgroundTransparency = 0,
+        PopupTitle = Color3.fromHex("#ffffff"),
+        PopupContent = Color3.fromHex("#ffffff"),
+        PopupIcon = Color3.fromHex("#ffa54d"),
+
+        Toggle = Color3.fromHex("#ff8800"),
+        ToggleBar = Color3.fromHex("#ffffff"),
+
+        Checkbox = Color3.fromHex("#ff8800"),
+        CheckboxIcon = Color3.fromHex("#ffffff"),
+
+        Slider = Color3.fromHex("#ff8800"),
+        SliderThumb = Color3.fromHex("#ffffff"),
     })
 
 
     local Window = WindUI:CreateWindow({
         Title = GAME,
-        Icon = LOGO,
+        --Icon = LOGO,
         Name = "PhoenixHUB_UI_Window",
         Author = "Version 1.3",
         Folder = "PhoenixHUB",
         NewElements = true,
-        Size = UDim2.fromOffset(590, 350),
-        MinSize = Vector2.new(560, 330),
-        MaxSize = Vector2.new(620, 370),
+        Size = UDim2.fromOffset(650, 430),
+        MinSize = Vector2.new(600, 360),
+        MaxSize = Vector2.new(700, 460),
         HideSearchBar = false,
         Transparent = false,
         Theme = "Dark",
         Resizable = true,
         SideBarWidth = 200,
-        --BackgroundTransparency = 0.,
-        --Background = "rbxassetid://138742999874945",
-        --BackgroundImageTransparency = 0.95,
-        Theme = "Theme_1",
+        Theme = "test",
     })
 
     Modules.OpenButton.Create(Window)
     Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00")})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
-    Window:OnDestroy(function()  end)
-
-    local ConfigManager = Window.ConfigManager
-    local myConfig = ConfigManager:CreateConfig("Default") -- will be saved as config1.json
+    Window:OnDestroy(function() 
+        for _, v in ipairs(PlayerGui:GetChildren()) do
+            if v.Name == "PhoenixHUB" then
+                v:Destroy()
+            end
+        end    
+    end)
 
     Window:CreateTopbarButton("", "x",    function() 
         Window:Dialog({ Icon = "rbxassetid://14446997892", Title = "Close Confirmation", Content = "Are you sure you want to close gui?",
             Buttons = {
                 {
-                    Title = "Confirm",
+                    Title = "Cancel",
+                    Variant = "Secondary",
+                    Callback = function()
+                    end,
+                },
+                {
+                    Title = "Close Window",
                     Variant = "Primary",
                     Callback = function()
                         Window:Destroy()
                         myConfig:Save()
                         Cleanup()
                         Modules.OpenButton.Destroy()
-                    end,
-                },
-                {
-                    Title = "Cancel",
-                    Variant = "Secondary",
-                    Callback = function()
                     end,
                 },
             },
@@ -897,7 +946,6 @@ local LOGO = "rbxassetid://140413750237602"
         Window:Toggle()
     end,  989)
     
-    myConfig:Load()
 
 --
 
