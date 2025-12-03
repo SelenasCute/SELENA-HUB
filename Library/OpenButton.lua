@@ -27,7 +27,7 @@ function ToggleUI.Create(window)
     button.Name = "ToggleButton"
     button.AnchorPoint = Vector2.new(0.5, 0.5)
     button.Position = UDim2.new(0.95, 0, 0.5, 0)
-    button.Size = UDim2.new(0.055, 0, 0.12, 0)
+    button.Size = UDim2.new(0.031, 0, 0.056, 0)
     button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     button.Image = "rbxassetid://140413750237602"
     button.BorderSizePixel = 0
@@ -39,7 +39,7 @@ function ToggleUI.Create(window)
     aspect.AspectRatio = 1
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0.2, 0)
+    corner.CornerRadius = UDim.new(0.5, 0)
     corner.Parent = button
 
     local stroke = Instance.new("UIStroke")
@@ -75,10 +75,15 @@ function ToggleUI.Create(window)
         end
     end)
 
-    -- Toggle action
+    -- Toggle Window
+	local db = false
+	local db_time = 0.5
     button.MouseButton1Click:Connect(function()
-		task.wait(0.5)
+		if db == true then return end
+		db = true
         window:Toggle()
+		task.wait(db_time)
+		db = false
     end)
 
     return gui
