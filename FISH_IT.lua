@@ -185,6 +185,13 @@ local LOGO = "rbxassetid://140413750237602"
 
 --[[===== UTILITY FUNCTIONS =====]]
 
+    local function ColorizePercent(text)
+        local textPart, percent = string.match(text, "^(.-)%s*%-%s*(%d+%%)$")
+        if not textPart or not percent then return text end
+
+        return string.format("%s - <font color=\"rgb(255,255,0)\">%s</font>", textPart, percent)
+    end
+
     local function HideAllUsernames(state)
         local AllChar = workspace:FindFirstChild("Characters")
         if not AllChar then return end
@@ -1240,13 +1247,6 @@ local LOGO = "rbxassetid://140413750237602"
         -- COLORIZE PROGRESS TEXT
         -- ======================================================
 
-        local function ColorizePercent(text)
-            local textPart, percent = string.match(text, "^(.-)%s*%-%s*(%d+%%)$")
-            if not textPart or not percent then return text end
-
-            return string.format("%s - <font color=\"rgb(255,255,0)\">%s</font>", textPart, percent)
-        end
-
         local function UpdateDeepSeaProgress()
             local msg = string.format(
                 "1. %s\n2. %s\n3. %s\n4. %s\n\n%s",
@@ -1276,6 +1276,34 @@ local LOGO = "rbxassetid://140413750237602"
             AutoDeepSeaQuest(state)
         end
     })
+    QuestTAB:Section({Title = "Element Quest Proggress"})
+    local ElementQuestTab = QuestTAB:Paragraph({
+        Title = "Requirement:",
+        Desc = ""
+    })
+    -- Auto Element Function
+        local ElementContent = game:GetService("Workspace")["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content
+        
+        local function UpdateElementProgress()
+            local msg = string.format(
+                "1. %s\n2. %s\n3. %s\n4. %s\n\n%s",
+                ColorizePercent(ElementContent.Label1.Text),
+                ColorizePercent(ElementContent.Label2.Text),
+                ColorizePercent(ElementContent.Label3.Text),
+                ColorizePercent(ElementContent.Label4.Text),
+                ColorizePercent(ElementContent.Progress.ProgressLabel.Text)
+            )
+            ElementQuestTab:SetDesc(msg)
+        end
+
+        UpdateElementProgress()
+        ElementContent.Label1:GetPropertyChangedSignal("Text"):Connect(UpdateElementProgress)
+        ElementContent.Label2:GetPropertyChangedSignal("Text"):Connect(UpdateElementProgress)
+        ElementContent.Label3:GetPropertyChangedSignal("Text"):Connect(UpdateElementProgress)
+        ElementContent.Label4:GetPropertyChangedSignal("Text"):Connect(UpdateElementProgress)
+        ElementContent.Progress.ProgressLabel:GetPropertyChangedSignal("Text"):Connect(UpdateElementProgress)
+    --
+    
 
 --
 
