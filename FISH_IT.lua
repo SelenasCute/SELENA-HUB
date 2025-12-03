@@ -94,7 +94,7 @@ local LOGO = "rbxassetid://140413750237602"
     }
 --
 
---[[===== CONFIGURATION =====]] --//ANCHOR
+--[[===== CONFIGURATION =====]]
     local DefaultConfig = {
         -- Main Features
         AutoFish = false,
@@ -104,6 +104,9 @@ local LOGO = "rbxassetid://140413750237602"
         AutoSellDelay = 30,
         FishingRadar = false,
         DivingGear = false,
+
+        -- QUEST
+        AutoDeepSeaQuest = false,
         
         -- Player Settings
         WalkSpeed = 16,
@@ -179,6 +182,7 @@ local LOGO = "rbxassetid://140413750237602"
     table.sort(npcNames)
 
 --
+
 --[[===== UTILITY FUNCTIONS =====]]
 
     local function HideAllUsernames(state)
@@ -821,7 +825,7 @@ local LOGO = "rbxassetid://140413750237602"
     end)
 --
 
---[[===== MAIN UI INITIALIZATION =====]]
+--[[<<===== MAIN UI INITIALIZATION =====>>]]
 
     local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
     WindUI:AddTheme({
@@ -834,7 +838,7 @@ local LOGO = "rbxassetid://140413750237602"
         Title = GAME,
         Icon = LOGO,
         Name = "PhoenixHUB_UI_Window",
-        Author = "Discord.gg/PhoenixHUB",
+        Author = "Version 1.3",
         Folder = "PhoenixHUB",
         NewElements = true,
         Size = UDim2.fromOffset(590, 350),
@@ -852,7 +856,7 @@ local LOGO = "rbxassetid://140413750237602"
     })
 
     Modules.OpenButton.Create(Window)
-    Window:Tag({Title = "Version " .. VERSION, Color = Color3.fromHex("#6b31ff")})
+    Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00")})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
     Window:OnDestroy(function()  end)
 
@@ -874,7 +878,7 @@ local LOGO = "rbxassetid://140413750237602"
                 },
                 {
                     Title = "Cancel",
-                    Variant = "Tertiary",
+                    Variant = "Secondary",
                     Callback = function()
                     end,
                 },
@@ -1168,21 +1172,108 @@ local LOGO = "rbxassetid://140413750237602"
 -- QUEST TAB
     local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
 
-    QuestTAB:Section({Title = "Quest Proggress"})
-    QuestTAB:Button({
-        Title = "Check Deep Sea Quest Proggress",
-        Icon = "rbxassetid://116644397704032",
-        Desc = "Reward: Ghostfin Rod",
-        Callback = function() 
-            ShowQuestUI("DeepSeaQuest")
-        end
+    QuestTAB:Section({Title = "Deep Sea Quest Progress"})
+    local DeepSeaQuestTab = QuestTAB:Paragraph({
+        Title = "Requirement:",
+        Desc = ""
     })
-    QuestTAB:Button({
-        Title = "Check Element Quest Proggress",
-        Icon = "rbxassetid://99867965187788",
-        Desc = "Reward: Element Rod",
-        Callback = function() 
-            ShowQuestUI("ElementQuest")
+    QuestTAB:Space()
+    -- Auto Deep Sea Function  
+        local DeepSeaContent = game:GetService("Workspace")["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+        local Locations = {
+            Step1 = CFrame.new(-3597.68237, -275.687347, -1641.26965),
+            Step2 = CFrame.new(-3729.09033, -135.074417, -1013.51556),
+            Step3 = CFrame.new(-3729.09033, -135.074417, -1013.51556),
+            Step4 = CFrame.new(-3729.09033, -135.074417, -1013.51556),
+        }
+        local AutoQuestRunning = false
+
+        local function GetQuestData()
+            return {
+                v1 = DeepSeaContent.Label1.Text,
+                v2 = DeepSeaContent.Label2.Text,
+                v3 = DeepSeaContent.Label3.Text,
+                v4 = DeepSeaContent.Label4.Text,
+                v5 = DeepSeaContent.Progress.ProgressLabel.Text
+            }
+        end
+
+        local function GetCurrentStep()
+            local D = GetQuestData()
+
+            if not string.find(D.v1, "100%%") then return 1 end
+            if not string.find(D.v2, "100%%") then return 2 end
+            if not string.find(D.v3, "100%%") then return 3 end
+            if not string.find(D.v4, "100%%") then return 4 end
+
+            return 0 -- completed all
+        end
+
+        local function AutoDeepSeaQuest(state)
+            AutoQuestRunning = state
+
+            if not state then
+                Notify("Auto Deep Sea Quest", "Auto Deep Sea Quest Stopped")
+                return
+            end
+
+            task.spawn(function()
+                while AutoQuestRunning do
+                    local step = GetCurrentStep()
+
+                    if step == 0 then
+                        Notify("Auto Deep Sea Quest", "You're already completed the quest!")
+                        break
+                    end
+
+                    local tpLocation = Locations["Step" .. step]
+
+                    HumanoidRootPart.CFrame = tpLocation
+                    Notify("Auto Deep Sea Quest", "Doing Step " .. step)
+
+                    task.wait(5) -- teleport cooldown
+                end
+            end)
+        end
+
+        -- ======================================================
+        -- COLORIZE PROGRESS TEXT
+        -- ======================================================
+
+        local function ColorizePercent(text)
+            local textPart, percent = string.match(text, "^(.-)%s*%-%s*(%d+%%)$")
+            if not textPart or not percent then return text end
+
+            return string.format("%s - <font color=\"rgb(255,255,0)\">%s</font>", textPart, percent)
+        end
+
+        local function UpdateDeepSeaProgress()
+            local msg = string.format(
+                "1. %s\n2. %s\n3. %s\n4. %s\n\n%s",
+                ColorizePercent(DeepSeaContent.Label1.Text),
+                ColorizePercent(DeepSeaContent.Label2.Text),
+                ColorizePercent(DeepSeaContent.Label3.Text),
+                ColorizePercent(DeepSeaContent.Label4.Text),
+                ColorizePercent(DeepSeaContent.Progress.ProgressLabel.Text)
+            )
+            DeepSeaQuestTab:SetDesc(msg)
+        end
+
+        UpdateDeepSeaProgress()
+
+        DeepSeaContent.Label1:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
+        DeepSeaContent.Label2:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
+        DeepSeaContent.Label3:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
+        DeepSeaContent.Label4:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
+        DeepSeaContent.Progress.ProgressLabel:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
+    --
+    DeepSeaQuestToggle =  QuestTAB:Toggle({
+        Flag = "TOGGLE_AutoGhostfin",
+        Title = "Auto Deep Sea Quest",
+        Value = Config.AutoDeepSeaQuest,
+        Callback = function(state)
+            Config.AutoDeepSeaQuest = state
+            AutoDeepSeaQuest(state)
         end
     })
 
