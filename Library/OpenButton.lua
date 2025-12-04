@@ -30,7 +30,7 @@ function ToggleUI.Create(window)
     button.AnchorPoint = Vector2.new(0.5, 0.5)
     button.Position = UDim2.new(0.95, 0, 0.5, 0)
     button.Size = UDim2.new(0, 60, 0, 60) -- Base size in pixels
-    button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    button.BackgroundColor3 = Color3.fromRGB(255, 25, 25)
     button.Image = "rbxassetid://140413750237602"
     button.BorderSizePixel = 0
     button.AutoButtonColor = true
@@ -54,8 +54,8 @@ function ToggleUI.Create(window)
 	local gradient = Instance.new("UIGradient")
 	gradient.Color = ColorSequence.new{
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 140, 0)),   -- Dark orange
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 100)), -- Light orange
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 140, 0))    -- Dark orange
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 200, 200)), -- Light orange
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 0))    -- Dark orange
 	}
 	gradient.Rotation = 0
 	gradient.Parent = stroke
