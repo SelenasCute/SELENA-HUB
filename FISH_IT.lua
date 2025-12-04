@@ -84,8 +84,6 @@ local LOGO = "rbxassetid://140413750237602"
         HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
     end)
 
-    HumanoidRootPart.CFrame = CFrame.new(-0.260026217, 9.53157043, 2711.38672, -0.105230443, -2.15196139e-10, -0.994447887, -1.36840261e-09, 1, -7.15960416e-11, 0.994447887, 1.35327105e-09, -0.105230443)
-
 --
 
 --[[===== MODULES =====]]
@@ -258,7 +256,6 @@ local LOGO = "rbxassetid://140413750237602"
         Notify("Cleanup", "All settings reset to default.", "trash")
     end
 
-
     local function parsePrice(text)
         local num, suffix = string.match(text, "%(([%d%.]+)([KkMm]?)%$")
         num = tonumber(num)
@@ -336,82 +333,6 @@ local LOGO = "rbxassetid://140413750237602"
     -- ====================================================================
     --                        GAME FUNCTIONS
     -- ====================================================================
-    local function ShowQuestUI(name)
-
-        if name == "DeepSeaQuest" then
-            local DeepQuestTEMP = game:GetService("Workspace")["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui
-            if DeepQuestTEMP.Content.Progress.ProgressLabel.Text == "PROGRESS: 100% (Completed 4)" then
-                return Notify("QUEST", "Deep Sea Quest has already been completed.", "rbxassetid://79837430697255", 5)
-            end
-
-            local DeepSeaQuest = game.Players.LocalPlayer.PlayerGui:FindFirstChild("DeepSeaQuest")
-            if not DeepSeaQuest then 
-                DeepSeaQuest = Instance.new("ScreenGui")
-                DeepSeaQuest.Name = "DeepSeaQuest"
-                DeepSeaQuest.Parent = game.Players.LocalPlayer.PlayerGui
-            end
-            
-            for _, child in ipairs(DeepQuestTEMP:GetChildren()) do
-                if not child:IsA("UIPadding") then -- skip layout/UI padding
-                    local clone = child:Clone()
-                    clone.Parent = DeepSeaQuest
-
-                    clone.AnchorPoint = Vector2.new(0.5, 0.5)
-                    clone.Size = UDim2.new(0.5, 0, 0.5, 0)
-                    clone.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    clone.BackgroundTransparency = 0.1
-                    clone.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-
-                    local Close = game:GetService("ReplicatedStorage").Controllers.BackpackController.Hitbox.Close:Clone()                       
-                    Close.Size = UDim2.new(0.1, 0, 0.1, 0)
-                    Close.AnchorPoint = Vector2.new(0.5, 0.5)
-                    Close.Position = UDim2.new(0.745, 0, 0.265, 0)
-                    Close.Parent = DeepSeaQuest
-                    Close.MouseButton1Click:Connect(function()
-                        for _, child in ipairs(DeepSeaQuest:GetChildren()) do
-                            child:Destroy()
-                        end
-                    end)
-                end
-            end
-        elseif name == "ElementQuest" then
-            local ElementQuestTEMP = game:GetService("Workspace")["!!! MENU RINGS"]["Element Tracker"].Board.Gui
-            if ElementQuestTEMP.Content.Progress.ProgressLabel.Text == "PROGRESS: 100% (Completed 4)" then
-                return Notify("Element Quest has already been completed.", "rbxassetid://79837430697255", 5)
-            end
-
-            local ElementQuest = game.Players.LocalPlayer.PlayerGui:FindFirstChild("ElementQuest")
-            if not ElementQuest then 
-                ElementQuest = Instance.new("ScreenGui")
-                ElementQuest.Name = "ElementQuest"
-                ElementQuest.Parent = game.Players.LocalPlayer.PlayerGui
-            end
-
-            for _, child in ipairs(ElementQuestTEMP:GetChildren()) do
-                if not child:IsA("UIPadding") then -- skip layout/UI padding
-                    local clone = child:Clone()
-                    clone.Parent = ElementQuest
-
-                    clone.AnchorPoint = Vector2.new(0.5, 0.5)
-                    clone.Size = UDim2.new(0.5, 0, 0.5, 0)
-                    clone.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    clone.BackgroundTransparency = 0.1
-                    clone.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-
-                    local Close = game:GetService("ReplicatedStorage").Controllers.BackpackController.Hitbox.Close:Clone()                       
-                    Close.Size = UDim2.new(0.1, 0, 0.1, 0)
-                    Close.AnchorPoint = Vector2.new(0.5, 0.5)
-                    Close.Position = UDim2.new(0.745, 0, 0.265, 0)
-                    Close.Parent = ElementQuest
-                    Close.MouseButton1Click:Connect(function()
-                        for _, child in ipairs(ElementQuest:GetChildren()) do
-                            child:Destroy()
-                        end
-                    end)
-                end
-            end
-        end
-    end 
 
     -- SINGLE FUNCTION
     local function RedeemCode()
@@ -736,12 +657,12 @@ local LOGO = "rbxassetid://140413750237602"
         while task.wait() do
             if Config.AutoFishV2 then
                 pcall(function()
-                    Events.equip:FireServer(1)
+                    --Events.equip:FireServer(1)
                     --task.wait(0.05)
                     Events.charge:InvokeServer(1755848498.4834)
                    -- task.wait(0.02)
                     Events.minigame:InvokeServer(1.2854545116425, 1)
-                    --task.wait(Config.AutoFishV2Delay)
+                    task.wait(Config.AutoFishV2Delay)
                     Events.fishing:FireServer()
                 end)
             end
@@ -1232,7 +1153,6 @@ local LOGO = "rbxassetid://140413750237602"
         Title = "Requirement:",
         Desc = ""
     })
-    QuestTAB:Space()
     -- Auto Deep Sea Function  
         local DeepSeaContent = game:GetService("Workspace")["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
         local Locations = {
@@ -1297,12 +1217,12 @@ local LOGO = "rbxassetid://140413750237602"
 
         local function UpdateDeepSeaProgress()
             local msg = string.format(
-                "1. %s\n2. %s\n3. %s\n4. %s\n\n%s",
+                "1. %s\n2. %s\n3. %s\n4. %s\n\n<font color=\"#00FF00\">%s</font>",
                 ColorizePercent(DeepSeaContent.Label1.Text),
                 ColorizePercent(DeepSeaContent.Label2.Text),
                 ColorizePercent(DeepSeaContent.Label3.Text),
                 ColorizePercent(DeepSeaContent.Label4.Text),
-                ColorizePercent(DeepSeaContent.Progress.ProgressLabel.Text)
+                DeepSeaContent.Progress.ProgressLabel.Text
             )
             DeepSeaQuestTab:SetDesc(msg)
         end
@@ -1324,6 +1244,7 @@ local LOGO = "rbxassetid://140413750237602"
             AutoDeepSeaQuest(state)
         end
     })
+    QuestTAB:Space()
     QuestTAB:Section({Title = "Element Quest Proggress"})
     local ElementQuestTab = QuestTAB:Paragraph({
         Title = "Requirement:",
@@ -1334,12 +1255,12 @@ local LOGO = "rbxassetid://140413750237602"
         
         local function UpdateElementProgress()
             local msg = string.format(
-                "1. %s\n2. %s\n3. %s\n4. %s\n\n%s",
+                "1. %s\n2. %s\n3. %s\n4. %s\n\n<font color=\"#00FF00\">%s</font>",
                 ColorizePercent(ElementContent.Label1.Text),
                 ColorizePercent(ElementContent.Label2.Text),
                 ColorizePercent(ElementContent.Label3.Text),
                 ColorizePercent(ElementContent.Label4.Text),
-                ColorizePercent(ElementContent.Progress.ProgressLabel.Text)
+                ElementContent.Progress.ProgressLabel.Text
             )
             ElementQuestTab:SetDesc(msg)
         end
