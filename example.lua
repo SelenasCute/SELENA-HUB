@@ -84,7 +84,7 @@ local LOGO = "rbxassetid://140413750237602"
         WindowTopbarAuthor = Color3.fromHex("#ff8800"),
         WindowTopbarIcon = Color3.fromHex("#ffffff"),
 
-        TabBackground = Color3.fromHex("#ff8800"),
+        TabBackground = Color3.fromHex("#1a1a1a"),
         TabTitle = Color3.fromHex("#ffffff"),
         TabIcon = Color3.fromHex("#ffa54d"),
 
@@ -108,8 +108,6 @@ local LOGO = "rbxassetid://140413750237602"
         SliderThumb = Color3.fromHex("#ffffff"),
     })
 
-
-
     local Window = WindUI:CreateWindow({
         Title = GAME,
         Name = "PhoenixHUB_UI_Window",
@@ -119,11 +117,10 @@ local LOGO = "rbxassetid://140413750237602"
         Size = UDim2.fromOffset(590, 350),
         MinSize = Vector2.new(560, 330),
         MaxSize = Vector2.new(620, 370),
-        HideSearchBar = false,
+        HideSearchBar = true,
         Transparent = false,
-        Theme = "Dark",
         Resizable = true,
-        SideBarWidth = 200,
+        SideBarWidth = 150,
         Theme = "test",
     })
 
@@ -184,4 +181,9 @@ local LOGO = "rbxassetid://140413750237602"
             }
         }
     })
+
+    InfoTab:Section({Title = "Example"})
+    InfoTab:Toggle({Flag = "Test", Title = "Test", Value = false, Callback = function (args)
+        print("Test1")
+    end})
 --

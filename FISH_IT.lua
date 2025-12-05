@@ -762,7 +762,7 @@ local LOGO = "rbxassetid://140413750237602"
         Name = "test",
 
         Accent = Color3.fromHex("#ff8800"),
-        Background = Color3.fromHex("#1a1a1a"),
+        Background = Color3.fromHex("#000000"),
         BackgroundTransparency = 0,
         Outline = Color3.fromHex("#ffffff"),
         Text = Color3.fromHex("#ffffff"),
@@ -772,7 +772,7 @@ local LOGO = "rbxassetid://140413750237602"
         
         Hover = Color3.fromHex("#ffb267"),
 
-        WindowBackground = Color3.fromHex("#181818"),
+        WindowBackground = Color3.fromHex("#101010"),
         WindowShadow = Color3.fromHex("#000000"),
 
         DialogBackground = Color3.fromHex("#1a1a1a"),
@@ -818,19 +818,20 @@ local LOGO = "rbxassetid://140413750237602"
         Author = "Version 1.3",
         Folder = "PhoenixHUB",
         NewElements = true,
-        Size = UDim2.fromOffset(650, 430),
+        Size = UDim2.fromOffset(600, 360),
         MinSize = Vector2.new(600, 360),
         MaxSize = Vector2.new(700, 460),
-        HideSearchBar = false,
+        HideSearchBar = true,
         Transparent = false,
-        Theme = "Dark",
         Resizable = true,
-        SideBarWidth = 200,
+        SideBarWidth = 150,
         Theme = "test",
+        Radius = 16,
+        ElementsRadius = 10,
     })
 
     Modules.OpenButton.Create(Window)
-    Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00")})
+    Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00"), Icon = "rbxassetid://11322089611"})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
     Window:OnDestroy(function() 
         for _, v in ipairs(PlayerGui:GetChildren()) do
@@ -851,7 +852,7 @@ local LOGO = "rbxassetid://140413750237602"
                 },
                 {
                     Title = "Close Window",
-                    Variant = "Primary",
+                    Variant = "Secondary",
                     Callback = function()
                         Window:Destroy()
                         myConfig:Save()
@@ -1147,7 +1148,6 @@ local LOGO = "rbxassetid://140413750237602"
 
 -- QUEST TAB
     local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
-
     QuestTAB:Section({Title = "Deep Sea Quest Progress"})
     local DeepSeaQuestTab = QuestTAB:Paragraph({
         Title = "Requirement:",
