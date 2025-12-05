@@ -72,7 +72,7 @@ local function Notif(title, message)
 end
 
 local SupportedGames = {
-    [121864768012064] = "https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/FISH_IT.lua",
+    [121864768012064] = "https://raw.githubusercontent.com/SelenasCute/PHOENIX-HUB/main/FISH_IT.lua",
 }
 
 --// Loader
@@ -104,3 +104,4 @@ else
     warn("⚠️ Phoenix HUB | Game Not Supported:", id)
     Notif("Phoenix HUB", "This Game is Not Supported")
 end
+
