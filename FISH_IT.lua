@@ -11,11 +11,6 @@ local DISCORD_LINK = "dsc.gg/selena-hub"
 local LOGO = "rbxassetid://140413750237602"
 
 --[[===== DEPENDENCY CHECKS =====]]
-    local existingWindow = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("PhoenixHUB_UI_Window")
-    if existingWindow then
-        existingWindow:Destroy()
-    end
-
     local success, errorMsg = pcall(function()
         local services = {
             game = game,
@@ -88,9 +83,9 @@ local LOGO = "rbxassetid://140413750237602"
 
 --[[===== MODULES =====]]
     local Modules = {
-        OpenButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Library/OpenButton.lua"))(),
-        Player = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Player.lua"))(),
-        Location = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Services/Fish%20It/Location.lua"))()
+        OpenButton = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/PHOENIX-HUB/main/Library/OpenButton.lua"))(),
+        Player = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/PHOENIX-HUB/main/Services/Player.lua"))(),
+        Location = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/PHOENIX-HUB/main/Services/Fish%20It/Location.lua"))()
     }
 --
 
@@ -758,8 +753,9 @@ local LOGO = "rbxassetid://140413750237602"
 --[[<<===== MAIN UI INITIALIZATION =====>>]]
 
     local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
     WindUI:AddTheme({
-        Name = "test",
+        Name = "Default",
 
         Accent = Color3.fromHex("#ff8800"),
         Background = Color3.fromHex("#000000"),
