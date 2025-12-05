@@ -85,13 +85,14 @@ if url then
     end)
     local gName = ok and info.Name or "Unknown Game"
 
-    print("Phoenix HUB | Game Detected:", gName)
+    print("===> 💉 Executed Phoenix HUB to "..gName.." <===")
     Notif("Phoenix HUB", "Loading " .. gName .. "...")
 
     task.wait(1)
 
     local okLoad, err = pcall(function()
         loadstring(game:HttpGet(url))()
+        print("===> ✔ Phoenix HUB Executed Successfully <===")
     end)
 
     if okLoad then
