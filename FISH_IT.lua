@@ -102,6 +102,7 @@ local LOGO = "rbxassetid://140413750237602"
 
         -- QUEST
         AutoDeepSeaQuest = false,
+        AutoTempleArtifact = false,
         
         -- Player Settings
         WalkSpeed = 16,
@@ -586,88 +587,13 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end
 
+    local function AutoFarmArtifact(state)
+
+    end
+
 --
 
 --[[===== MAIN TASKS =====]]
-
-    -- AUTO SYNC CONFIG TASK
-    task.spawn(function()
-        while task.wait(0.5) do
-        --[[ GEAR SYNC ]]
-            if not Config.Oxygen then
-                if Config._OxygenActive then
-                    Config._OxygenActive = false
-                    RequestGear("Oxygen", false)
-                end
-            else
-                if not Config._OxygenActive then
-                    Config._OxygenActive = true
-                    RequestGear("Oxygen", true)
-                end
-            end
-
-            if not Config.Radar then
-                if Config._RadarActive then
-                    Config._RadarActive = false
-                    RequestGear("Radar", false)
-                end
-            else
-                if not Config._RadarActive then
-                    Config._RadarActive = true
-                    RequestGear("Radar", true)
-                end
-            end
-        -- [[ GRAPHICS SETTINGS SYNC ]]
-            if not Config.FPSBoost then
-                if Config._FPSBoostActive then
-                    Config._FPSBoostActive = false
-                    ToggleFPSBoost(false)
-                end
-            else
-                if not Config._FPSBoostActive then
-                    Config._FPSBoostActive = true
-                    ToggleFPSBoost(true)
-                end
-            end
-
-            if not Config.LowGraphics then
-                if Config._LowGraphicsActive then
-                    Config._LowGraphicsActive = false
-                    ToggleLowGraphics(false)
-                end
-            else
-                if not Config._LowGraphicsActive then
-                    Config._LowGraphicsActive = true
-                    ToggleLowGraphics(true)
-                end
-            end
-
-            if not Config.AntiAFK then
-                if Config._AntiAFKActive then
-                    Config._AntiAFKActive = false
-                    ToggleAntiAFK(false)
-                end
-            else
-                if not Config._AntiAFKActive then
-                    Config._AntiAFKActive = true
-                    ToggleAntiAFK(true)
-                end
-            end
-
-            if not Config.Disable3DRendering then
-                if Config._Disable3DRenderingActive then
-                    Config._Disable3DRenderingActive = false
-                    Toggle3DRenderingDisable(false)
-                end
-            else
-                if not Config._Disable3DRenderingActive then
-                    Config._Disable3DRenderingActive = true
-                    Toggle3DRenderingDisable(true)
-                end
-            end
-        end
-    end)
-
 
     --// AUTO SELL LOOP
     task.spawn(function()
@@ -680,7 +606,7 @@ local LOGO = "rbxassetid://140413750237602"
     end)
 
 
-    --// AUTO FISH V1 LOOPS
+    --// LEFIT FISHING LOOPS
     task.spawn(function()
         while task.wait(0.15) do
             if Config.AutoFish then
@@ -690,12 +616,12 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end)
 
-    --// AUTO FISH V2 LOOP
+    --// INSTANT FISHING LOOP
     task.spawn(function()
         while task.wait() do
             if Config.AutoFishV2 then
                 pcall(function()
-                    --Events.equip:FireServer(1)
+                    Events.equip:FireServer(1)
                     --task.wait(0.05)
                     Events.charge:InvokeServer(1755848498.4834)
                    -- task.wait(0.02)
@@ -805,8 +731,8 @@ local LOGO = "rbxassetid://140413750237602"
         Author = "Version 1.3",
         Folder = "PhoenixHUB",
         NewElements = true,
-        Size = UDim2.fromOffset(600, 360),
-        MinSize = Vector2.new(600, 360),
+        Size = UDim2.fromOffset(605, 360),
+        MinSize = Vector2.new(605, 360),
         MaxSize = Vector2.new(700, 460),
         HideSearchBar = true,
         Transparent = false,
@@ -898,41 +824,44 @@ local LOGO = "rbxassetid://140413750237602"
     local MainTab = Window:Tab({Title = "Main", Icon = "landmark"})
 
     -- ==> [[ AUTO FISH SECTION
-        MainTab:Section({Title = "Auto Fish"})
+        MainTab:Section({Title = "Legit Fishing"})
         MainTab:Toggle({
-            Flag = "AutoFishv1",
-            Title = "Auto Fish V1",
-            Desc = "Automatically farms fishing while enable",
+            Flag = "LegitFishing",
+            Title = "Auto Legit Fishing",
+            Desc = "Auto Fishing just like using auto clicker, but better",
             Default = Config.AutoFish,
             Callback = function(state)
                 Config.AutoFish = state
                 if state then
                     Events.equip:FireServer(1)
-                    Notify("Auto Fish V1", "Auto Fish V1 is now enabled.", "fish")
+                    Notify("Legit Fishing", "Legit Fishing is now enabled.", "fish")
                 else
-                    Notify("Auto Fish V1", "Auto Fish V1 is now disabled.", "fish")
+                    Notify("Legit Fishing", "Legit Fishing V1 is now disabled.", "fish")
                 end
             end
         })
-        MainTab:Space()
+        MainTab:Section({Title = "Instant Fishing"})
+        MainTab:Paragraph({
+            Title = "Default Setting for Instant Fishing",
+            Desc = "•<font color='#00c3ff'> Element Rod:</font> 0.2 - 0.5\n•<font color='#00c3ff'> Ghostfin Rod:</font> 0.65 - 0.9 \n•<font color='#00c3ff'> Astral Rod:</font> 1.8 - 2.0\n\n<font color='#FFFF00'>Note:</font> You can adjust the setting depends on your rods",
+        })
         MainTab:Toggle({
-            Flag = "AutoFishv2",
-            Title = "Auto Fish V2",
-            Desc = "Better Auto Fish, Delay Suggestion:\nAstral: 2",
+            Flag = "InstantFishing",
+            Title = "Instant Fishing",
+            Desc = "Automatically Fishing more faster/instant",
             Default = Config.AutoFishV2,
             Callback = function(state)
                 Config.AutoFishV2 = state
                 if state then
-                    Notify("Auto Fish V2", "Auto Fish V2 is now enabled.", "fish")
+                    Notify("Instant Fishing", "Instant Fishing is now enabled.", "fish")
                 else
-                    Notify("Auto Fish V2", "Auto Fish V2 is now disabled.", "fish")
+                    Notify("Instant Fishing", "Instant Fishing is now disabled.", "fish")
                 end
             end
         })
-        MainTab:Space()
         MainTab:Slider({
-            Flag = "AutoFishV2DelaySlider",
-            Title = "Auto Fish V2 Delay",
+            Flag = "slider_InstantFishing",
+            Title = "Custom Complete Delay",
             Step = 0.1,
             Value = {
                 Min = 0.1,
@@ -953,6 +882,7 @@ local LOGO = "rbxassetid://140413750237602"
             Desc = "Automatically sell your inventory while enable",
             Default = Config.AutoSell,
             Callback = function(state)
+                Events.sell:InvokeServer()
                 Config.AutoSell = state
                 if state then
                     Notify("Auto Sell", "Auto Sell is now enabled.", "rbxassetid://9341850470")
@@ -984,10 +914,6 @@ local LOGO = "rbxassetid://140413750237602"
         })
         MainTab:Space()
 
-    -- ==> ]]
-    
-    -- ==> [[ EVENT SECTION
-        local EventSection = MainTab:Section({Title = "Event"})
     -- ==> ]]
 --
 
@@ -1135,11 +1061,79 @@ local LOGO = "rbxassetid://140413750237602"
 
 -- QUEST TAB
     local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
-    QuestTAB:Section({Title = "Deep Sea Quest Progress"})
-    local DeepSeaQuestTab = QuestTAB:Paragraph({
-        Title = "Requirement:",
-        Desc = ""
+    QuestTAB:Section({Title = "Temple Artifact Proggress"})
+    local TempleArtifactTab = QuestTAB:Paragraph({ Title = "Lever Proggress", Desc = ""})
+    local AutoTempleArtifact = QuestTAB:Toggle({
+        Flag = "TOGGLE_AutoArtifact",
+        Title = "Auto Farm All Artifact",
+        Value = Config.AutoTempleArtifact,
+        Callback = function(state)
+            Config.AutoTempleArtifact = state
+            AutoFarmArtifact(state)
+        end
     })
+    
+    -- Auto Farm Artifact
+        -- GET INFORMATION OF UNLOCKED ARTIFACT
+        local ArtifactData = {
+            ["Arrow Artifact"] = false,
+            ["Crescent Artifact"] = false,
+            ["Diamond Artifact"] = false,
+            ["Hourglass Diamond Artifact"] = false
+        }
+
+        local function UpdateArtifactProgress()
+            local desc = ""
+            local orderedArtifacts = {"Arrow Artifact", "Crescent Artifact", "Diamond Artifact", "Hourglass Diamond Artifact"}
+            local allPlaced = true
+            local placedArtifacts = {}
+
+            for _, name in ipairs(orderedArtifacts) do
+            local isUnlocked = ArtifactData[name]
+            local status = isUnlocked and "<font color='#00FF00'>Placed</font>" or "<font color='#FF0000'>-</font>"
+            desc = desc .. "• " .. name .. ": " .. status .. "\n"
+            if not isUnlocked then
+                allPlaced = false
+            else
+                table.insert(placedArtifacts, name)
+            end
+            end
+
+            if allPlaced then
+            desc = desc .. "\n<font color='#00FF00'>All levers have been placed</font>"
+            else
+            desc = desc .. "\nPlaced: " .. table.concat(placedArtifacts, ", ")
+            end
+
+            TempleArtifactTab:SetDesc(desc)
+        end
+        
+        UpdateArtifactProgress()
+        
+        local Marking = game:GetService("Workspace")["JUNGLE INTERACTIONS"].Doors.TempleDoor.Markings
+        for _, artifact in ipairs(Marking:GetChildren()) do
+            local art = artifact.name
+            if ArtifactData[art] ~= nil then
+                if artifact.Crystal.Color ~= Color3.fromRGB(34, 30, 29) then
+                    ArtifactData[art] = true
+                    UpdateArtifactProgress()
+                end
+
+                -- Update Data
+                artifact.Crystal:GetPropertyChangedSignal("Color"):Connect(function()
+                    if artifact.Crystal.Color ~= Color3.fromRGB(34, 30, 29) then
+                        ArtifactData[art] = true
+                        UpdateArtifactProgress()
+                    end
+                end)
+            end
+        end
+        
+    --
+
+    QuestTAB:Section({Title = "Deep Sea Quest Progress"})
+    local DeepSeaQuestTab = QuestTAB:Paragraph({ Title = "Requirement:", Desc = ""})
+
     -- Auto Deep Sea Function  
         local DeepSeaContent = game:GetService("Workspace")["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
         local Locations = {
@@ -1222,7 +1216,7 @@ local LOGO = "rbxassetid://140413750237602"
         DeepSeaContent.Label4:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
         DeepSeaContent.Progress.ProgressLabel:GetPropertyChangedSignal("Text"):Connect(UpdateDeepSeaProgress)
     --
-    DeepSeaQuestToggle =  QuestTAB:Toggle({
+    local DeepSeaQuestToggle =  QuestTAB:Toggle({
         Flag = "TOGGLE_AutoGhostfin",
         Title = "Auto Deep Sea Quest",
         Value = Config.AutoDeepSeaQuest,
