@@ -825,7 +825,7 @@ local LOGO = "rbxassetid://140413750237602"
 
     -- ==> [[ AUTO FISH SECTION
         MainTab:Section({Title = "Legit Fishing"})
-        MainTab:Toggle({
+        local LegitFishingToggle = MainTab:Toggle({
             Flag = "LegitFishing",
             Title = "Auto Legit Fishing",
             Desc = "Auto Fishing just like using auto clicker, but better",
@@ -843,7 +843,7 @@ local LOGO = "rbxassetid://140413750237602"
         MainTab:Section({Title = "Instant Fishing"})
         MainTab:Paragraph({
             Title = "Default Setting for Instant Fishing",
-            Desc = "•<font color='#00c3ff'> Element Rod:</font> 0.2 - 0.5\n•<font color='#00c3ff'> Ghostfin Rod:</font> 0.65 - 0.9 \n•<font color='#00c3ff'> Astral Rod:</font> 1.8 - 2.0\n\n<font color='#FFFF00'>Note:</font> You can adjust the setting depends on your rods",
+            Desc = "•<font color='#00c3ff'> Element Rod:</font> 0.2 - 0.5\n•<font color='#00c3ff'> Ghostfin Rod:</font> 0.65 - 0.9 \n•<font color='#00c3ff'> Astral Rod:</font> 1.8 - 2.0\n\n<font color='#FFFF00'>Note:</font> You can adjust the settings depending on your rod, different zones/spots will have different settings.",
         })
         MainTab:Toggle({
             Flag = "InstantFishing",
@@ -1063,15 +1063,6 @@ local LOGO = "rbxassetid://140413750237602"
     local QuestTAB = Window:Tab({Title = "Quest", Icon = "notepad-text"})
     QuestTAB:Section({Title = "Temple Artifact Proggress"})
     local TempleArtifactTab = QuestTAB:Paragraph({ Title = "Lever Proggress", Desc = ""})
-    local AutoTempleArtifact = QuestTAB:Toggle({
-        Flag = "TOGGLE_AutoArtifact",
-        Title = "Auto Farm All Artifact",
-        Value = Config.AutoTempleArtifact,
-        Callback = function(state)
-            Config.AutoTempleArtifact = state
-            AutoFarmArtifact(state)
-        end
-    })
     
     -- Auto Farm Artifact
         -- GET INFORMATION OF UNLOCKED ARTIFACT
@@ -1080,6 +1071,13 @@ local LOGO = "rbxassetid://140413750237602"
             ["Crescent Artifact"] = false,
             ["Diamond Artifact"] = false,
             ["Hourglass Diamond Artifact"] = false
+        }
+
+        local ArtifactLocation = {
+            ["Arrow Artifact"] = CFrame.new(878.559692, 3.585270, -332.511993, -0.170589, 0.000000, 0.985342, -0.000000, 1.000000, -0.000000, -0.985342, -0.000000, -0.170589),
+            ["Crescent Artifact"] = CFrame.new(1398.989502, 3.367192, 121.269188, -0.976371, 0.000000, 0.216101, 0.000000, 1.000000, -0.000000, -0.216101, -0.000000, -0.976371),
+            ["Diamond Artifact"] = CFrame.new(1839.234863, 3.123258, -309.198456, 0.041732, -0.000000, -0.999129, -0.000000, 1.000000, -0.000000, 0.999129, 0.000000, 0.041732),
+            ["Hourglass Diamond Artifact"] = CFrame.new(1479.324341, 4.013598, -844.026794, -0.996744, 0.000000, 0.080626, -0.000000, 1.000000, -0.000000, -0.080626, -0.000000, -0.996744),
         }
 
         local function UpdateArtifactProgress()
@@ -1100,9 +1098,9 @@ local LOGO = "rbxassetid://140413750237602"
             end
 
             if allPlaced then
-            desc = desc .. "\n<font color='#00FF00'>All levers have been placed</font>"
+                desc = desc .. "\n<font color='#00FF00'>✅ All lever has been Placed </font> "
             else
-            desc = desc .. "\nPlaced: " .. table.concat(placedArtifacts, ", ")
+                desc = desc .. "\n<font color='#FFFF00'>Lever Placed: </font> " .. table.concat(placedArtifacts, ", ")
             end
 
             TempleArtifactTab:SetDesc(desc)
@@ -1128,8 +1126,110 @@ local LOGO = "rbxassetid://140413750237602"
                 end)
             end
         end
-        
+
+        local AutoArtifactRunning = false
+        local AutoThread = nil
+        local SAFE_DISTANCE = 3
+
+        local function GetNextArtifact()
+            local order = {
+                "Arrow Artifact",
+                "Crescent Artifact",
+                "Diamond Artifact",
+                "Hourglass Diamond Artifact"
+            }
+
+            for _, name in ipairs(order) do
+                if ArtifactData[name] == false then
+                    return name
+                end
+            end
+            return nil
+        end
+
+        local function AllComplete()
+            for _, v in pairs(ArtifactData) do
+                if v == false then
+                    return false
+                end
+            end
+            return true
+        end
+
+        local function IsNear(hrp, cframe)
+            return (hrp.Position - cframe.Position).Magnitude <= SAFE_DISTANCE
+        end
+
+
+        local function StartAuto()
+            if AutoArtifactRunning then return end
+            AutoArtifactRunning = true
+
+            AutoThread = task.spawn(function()
+                while AutoArtifactRunning do
+                    
+                    if AllComplete() then
+                        Notify("Artifact", "Successfully completed all levers!", "check")
+                        StopAuto()
+                        break
+                    else
+                        LegitFishingToggle:Set(true)
+                        Notify("Auto Farm Artifact", "Auto Farm All Artifact is now enabled", "fish")   
+                        task.wait(1) 
+                        Notify("Legit Fishing", "Legit Fishing is now enabled.", "fish")
+                    end
+
+                    local targetName = GetNextArtifact()
+                    if not targetName then
+                        task.wait(1)
+                        continue
+                    end
+
+                    local targetCFrame = ArtifactLocation[targetName]
+                    
+                    local char = Player.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+                    if not hrp then
+                        task.wait(1)
+                        continue
+                    end
+
+                    if not IsNear(hrp, targetCFrame) then
+                        Notify("Auto Artifact", "Teleporting to "..targetName, "compass")
+                        hrp.CFrame = targetCFrame
+                        task.wait(1)
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
+
+        local function StopAuto()
+            AutoArtifactRunning = false
+            Config.AutoFish = false
+            LegitFishingToggle:Set(false)
+            Notify("Auto Farm Artifact", "Auto Farm All Artifact is now disabled", "fish")   
+            task.wait(1) 
+            Notify("Legit Fishing", "Legit Fishing is now disabled.", "fish")
+        end
+
     --
+
+    local AutoTempleArtifact = QuestTAB:Toggle({
+        Title = "Auto Farm All Artifact",
+        Desc = "make sure to turn off shift lock",
+        Value = Config.AutoTempleArtifact,
+        Callback = function(state)
+            Config.AutoTempleArtifact = state
+            if state then
+                StartAuto()    
+            else
+                StopAuto()           
+            end
+        end
+    }) 
 
     QuestTAB:Section({Title = "Deep Sea Quest Progress"})
     local DeepSeaQuestTab = QuestTAB:Paragraph({ Title = "Requirement:", Desc = ""})
@@ -1219,6 +1319,7 @@ local LOGO = "rbxassetid://140413750237602"
     local DeepSeaQuestToggle =  QuestTAB:Toggle({
         Flag = "TOGGLE_AutoGhostfin",
         Title = "Auto Deep Sea Quest",
+        Desc = "You need to enable Legit Fishing or Instant Fishing to farm the quest",
         Value = Config.AutoDeepSeaQuest,
         Callback = function(state)
             Config.AutoDeepSeaQuest = state
