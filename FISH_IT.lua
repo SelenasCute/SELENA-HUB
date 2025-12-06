@@ -1098,7 +1098,7 @@ local LOGO = "rbxassetid://140413750237602"
             end
 
             if allPlaced then
-                desc = desc .. "\n<font color='#00FF00'>✅ All lever has been Placed </font> "
+                desc = desc .. "\n<font color='#00FF00'>All lever has been Placed </font> "
             else
                 desc = desc .. "\n<font color='#FFFF00'>Lever Placed: </font> " .. table.concat(placedArtifacts, ", ")
             end
