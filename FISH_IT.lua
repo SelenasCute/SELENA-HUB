@@ -125,6 +125,8 @@ local LOGO = "rbxassetid://140413750237602"
         LowGraphics = false,
         Disable3DRendering = false,
         AntiAFK = false,
+        Notifcations = true,
+        CaughtNotif = true,
         
         -- Shop Settings
         SelectedRod = nil,
@@ -180,6 +182,91 @@ local LOGO = "rbxassetid://140413750237602"
 --
 
 --[[===== UTILITY FUNCTIONS =====]]
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+    function FProximityPrompt()
+        local unc = {
+            Prompts = {};
+        }
+
+        local Camera = workspace.CurrentCamera;
+        local Execonce = Instance.new('Part');
+
+        Execonce.Anchored = true;
+        Execonce.CanTouch = false;
+        Execonce.CanCollide = false;
+        Execonce.CanQuery = false;
+        Execonce.CastShadow = false;
+        Execonce.Size = Vector3.new(0.01, 0.01, 0.01);
+        Execonce.Parent = workspace;
+        Execonce.Name = 'Regisiter';
+        Execonce.Transparency = 1;
+
+        function unc.fireprompt(ProximityPrompt, ...)
+            if not unc[ProximityPrompt] then
+                local Information = {};
+                
+                Information.HoldDuration = ProximityPrompt.HoldDuration;
+                Information.MaxActivationDistance = ProximityPrompt.MaxActivationDistance;
+                Information.RequiresLineOfSight = ProximityPrompt.RequiresLineOfSight;
+                Information.Parent = ProximityPrompt.Parent;
+                
+                unc[ProximityPrompt] = Information;
+            end
+            
+            local function Init()
+                Execonce.CFrame = Camera.CFrame * CFrame.new(0, 0, -4);
+                
+                ProximityPrompt.HoldDuration = -5;
+                ProximityPrompt.MaxActivationDistance = 250;
+                ProximityPrompt.Enabled = true;
+                ProximityPrompt.RequiresLineOfSight = false;
+                ProximityPrompt.Parent = Execonce;
+                
+                local spam = task.spawn(function()
+                    while true do
+                        task.wait(0.000001 / 9)
+                        Execonce.CFrame = Camera.CFrame * CFrame.new(0, 0, -4);
+                        ProximityPrompt:InputHoldBegin();
+                        
+                        game:GetService('RunService').RenderStepped:Wait();
+                        
+                        Execonce.CFrame = Camera.CFrame * CFrame.new(0, 0, -4);
+                        ProximityPrompt:InputHoldEnd();
+                    end
+                end)
+                
+                ProximityPrompt.Triggered:Wait();
+                
+                repeat task.wait()
+                    local success = pcall(function()
+                        task.cancel(spam);
+                    end)
+                until success
+                
+                local Loaded = unc[ProximityPrompt];
+                
+                ProximityPrompt.HoldDuration = Loaded.HoldDuration;
+                ProximityPrompt.MaxActivationDistance = Loaded.MaxActivationDistance;
+                ProximityPrompt.RequiresLineOfSight = Loaded.RequiresLineOfSight;
+                ProximityPrompt.Parent = Loaded.Parent;
+            end
+            
+            local option = {...};
+            
+            if typeof(option[1]) == 'number' then
+                for i = 1, option[1] do
+                    Init();
+                end
+            end
+        end
+        
+        return unc
+    end
+
+    fireproximityprompt = FProximityPrompt().fireprompt
+
     local function SetDefaultTheme(WindUI)
         WindUI:AddTheme({
             Name = "Default",
@@ -319,6 +406,7 @@ local LOGO = "rbxassetid://140413750237602"
     end
 
     local function Notify(title, content, icon, duration)
+        if Config.Notifcations == false then return end
         duration = duration or 3
         icon = icon or "info"
         return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
@@ -585,10 +673,6 @@ local LOGO = "rbxassetid://140413750237602"
             RunService:Set3dRenderingEnabled(true)
             if blackFrame then blackFrame.Visible = false end
         end
-    end
-
-    local function AutoFarmArtifact(state)
-
     end
 
 --
@@ -1164,6 +1248,10 @@ local LOGO = "rbxassetid://140413750237602"
         local function StartAuto()
             if AutoArtifactRunning then return end
             AutoArtifactRunning = true
+            LegitFishingToggle:Set(true)
+            Notify("Auto Farm Artifact", "Auto Farm All Artifact is now enabled", "fish")   
+            task.wait(1) 
+            Notify("Legit Fishing", "Legit Fishing is now enabled.", "fish")
 
             AutoThread = task.spawn(function()
                 while AutoArtifactRunning do
@@ -1173,10 +1261,16 @@ local LOGO = "rbxassetid://140413750237602"
                         StopAuto()
                         break
                     else
-                        LegitFishingToggle:Set(true)
-                        Notify("Auto Farm Artifact", "Auto Farm All Artifact is now enabled", "fish")   
-                        task.wait(1) 
-                        Notify("Legit Fishing", "Legit Fishing is now enabled.", "fish")
+                        for _, v in ipairs(game:GetService("Workspace")["JUNGLE INTERACTIONS"]:GetChildren()) do
+                            if v:IsA("Model") and v.Name == "TempleLever" then
+                                local p = v.RootPart:FindFirstChild("ProximityPrompt") 
+                                if p then
+                                    
+                                    fireproximityprompt(p, 1)
+
+                                end
+                            end
+                        end
                     end
 
                     local targetName = GetNextArtifact()
@@ -1882,6 +1976,15 @@ local LOGO = "rbxassetid://140413750237602"
 
     -- ==> [[ GAME SETTINGS
         MiscTab:Section({Title = "Game Settings"})
+        MiscTab:Toggle({
+            Flag = "DisableUINotif",
+            Title = "Disable Phoenix HUB Notifications",
+            Default = Config.Notifcations,
+            Callback = function(state)
+                Config.Notifcations = state
+            end
+        })
+
         MiscTab:Toggle({
             Flag = "FPSBoostToggle",
             Title = "FPS Boost",
