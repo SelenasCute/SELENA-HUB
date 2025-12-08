@@ -125,7 +125,8 @@ local LOGO = "rbxassetid://140413750237602"
         LowGraphics = false,
         Disable3DRendering = false,
         AntiAFK = false,
-        Notifcations = true,
+        DisableNotif = false,
+        DisableFishingNotification = false,
         CaughtNotif = true,
         
         -- Shop Settings
@@ -182,9 +183,35 @@ local LOGO = "rbxassetid://140413750237602"
 --
 
 --[[===== UTILITY FUNCTIONS =====]]
---[[
-	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
+
+    function ClearAll()
+        if ToggleAntiAFK then ToggleAntiAFK(false) end
+        if ToggleFPSBoost then ToggleFPSBoost(false) end
+        if ToggleLowGraphics then ToggleLowGraphics(false) end
+        if Toggle3DRenderingDisable then Toggle3DRenderingDisable(false) end
+        if OpenMerchant then OpenMerchant(false) end
+        if AutoSpotTeleport then AutoSpotTeleport(false) end
+
+        for k, v in pairs(DefaultConfig) do
+            Config[k] = typeof(v) == "table" and table.clone(v) or v
+        end
+
+        for _, v in ipairs(PlayerGui:GetChildren()) do
+            if v.Name == "PhoenixHUB" then
+                v:Destroy()
+            end
+        end        
+    end 
+
+    function DisableFishingNotifications(state)
+        local t = state and ReplicatedStorage or playerGui
+        for _, name in ipairs({"Text Notifications", "Small Notification"}) do
+            local g = playerGui:FindFirstChild(name) or ReplicatedStorage:FindFirstChild(name)
+            if g then g.Parent = t end
+        end
+    end
+
+
     function FProximityPrompt()
         local unc = {
             Prompts = {};
@@ -264,8 +291,6 @@ local LOGO = "rbxassetid://140413750237602"
         
         return unc
     end
-
-    fireproximityprompt = FProximityPrompt().fireprompt
 
     local function SetDefaultTheme(WindUI)
         WindUI:AddTheme({
@@ -381,18 +406,6 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end
 
-    function Cleanup()
-        for k, v in pairs(DefaultConfig) do
-            Config[k] = typeof(v) == "table" and table.clone(v) or v
-        end
-
-        if ConfigManager then
-            ConfigManager:Delete("default")
-            ConfigManager:CreateConfig("default"):Save()
-        end
-        Notify("Cleanup", "All settings reset to default.", "trash")
-    end
-
     local function parsePrice(text)
         local num, suffix = string.match(text, "%(([%d%.]+)([KkMm]?)%$")
         num = tonumber(num)
@@ -406,7 +419,7 @@ local LOGO = "rbxassetid://140413750237602"
     end
 
     local function Notify(title, content, icon, duration)
-        if Config.Notifcations == false then return end
+        if Config.DisableNotif == false then return end
         duration = duration or 3
         icon = icon or "info"
         return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
@@ -434,8 +447,6 @@ local LOGO = "rbxassetid://140413750237602"
         }
     end
 
-    local Events = getNetworkEvents()
-
     local function GetAllPlayerNames()
         local names = {}
         for _, plr in ipairs(Players:GetPlayers()) do
@@ -459,7 +470,7 @@ local LOGO = "rbxassetid://140413750237602"
 
     -- ====================================================================
     --                        GAME FUNCTIONS
-    -- ====================================================================
+    -- ====================================================================   
 
     -- SINGLE FUNCTION
     local function RedeemCode()
@@ -675,6 +686,9 @@ local LOGO = "rbxassetid://140413750237602"
         end
     end
 
+    fireproximityprompt = FProximityPrompt().fireprompt
+    local Events = getNetworkEvents()    
+
 --
 
 --[[===== MAIN TASKS =====]]
@@ -827,15 +841,15 @@ local LOGO = "rbxassetid://140413750237602"
         ElementsRadius = 10,
     })
 
+    local ConfigManager = Window.ConfigManager
+    local DataManager = ConfigManager:CreateConfig("Default")
+    DataManager:Load()
     Modules.OpenButton.Create(Window)
     Window:Tag({Title = "PREMIUM", Color = Color3.fromHex("#FFFF00"), Icon = "rbxassetid://11322089611"})
     Window:DisableTopbarButtons({"Close", "Minimize", "Fullscreen",})
     Window:OnDestroy(function() 
-        for _, v in ipairs(PlayerGui:GetChildren()) do
-            if v.Name == "PhoenixHUB" then
-                v:Destroy()
-            end
-        end    
+        DataManager:Save()
+        ClearAll()
     end)
 
     Window:CreateTopbarButton("", "x",    function() 
@@ -852,9 +866,6 @@ local LOGO = "rbxassetid://140413750237602"
                     Variant = "Secondary",
                     Callback = function()
                         Window:Destroy()
-                        myConfig:Save()
-                        Cleanup()
-                        Modules.OpenButton.Destroy()
                     end,
                 },
             },
@@ -924,6 +935,7 @@ local LOGO = "rbxassetid://140413750237602"
                 end
             end
         })
+
         MainTab:Section({Title = "Instant Fishing"})
         MainTab:Paragraph({
             Title = "Default Setting for Instant Fishing",
@@ -956,6 +968,32 @@ local LOGO = "rbxassetid://140413750237602"
                 Config.AutoFishV2Delay = value
             end
         })
+
+        MainTab:Section({Title = "Misc"})
+        MainTab:Toggle({
+            Flag = "DisableFishingNotif",
+            Title = "Disable Fishing Notification",
+            Default = Config.DisableFishingNotification,
+            Callback = function(state)
+                Config.DisableFishingNotification = state
+                DisableFishingNotifications(state)
+                if state then
+                    Notify("Fishing Notification", "Fishing Notification is now disabled.", "bell-off")
+                else
+                    Notify("Fishing Notification", "Fishing Notification is now enabled.", "bell")
+                end
+            end
+        })
+        MainTab:Space()
+        MainTab:Toggle({
+            Flag = "DisableUINotif",
+            Title = "Disable Phoenix HUB Notifications",
+            Default = Config.Notifcations,
+            Callback = function(state)
+                Config.DisableNotif = state
+            end
+        })
+
     -- ==> ]] 
     
     -- ==> [[ AUTO SELL SECTION
@@ -1976,15 +2014,6 @@ local LOGO = "rbxassetid://140413750237602"
 
     -- ==> [[ GAME SETTINGS
         MiscTab:Section({Title = "Game Settings"})
-        MiscTab:Toggle({
-            Flag = "DisableUINotif",
-            Title = "Disable Phoenix HUB Notifications",
-            Default = Config.Notifcations,
-            Callback = function(state)
-                Config.Notifcations = state
-            end
-        })
-
         MiscTab:Toggle({
             Flag = "FPSBoostToggle",
             Title = "FPS Boost",
