@@ -3,7 +3,7 @@ local Modules = {}
 function Modules.LoadTheme(register, themeName)
     local Theme = themeName or "Default"
     if Theme == "Default" then
-        WindUI:AddTheme({
+        register:AddTheme({
             Name = "Default",
             Accent = Color3.fromHex("#ff8800"),
             Background = Color3.fromHex("#1a1a1a"),
