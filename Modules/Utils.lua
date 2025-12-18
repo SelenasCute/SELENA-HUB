@@ -1,4 +1,5 @@
 local Modules = {}
+
 function Modules.LoadTheme(register, themeName)
     local Theme = themeName or "Default"
     if Theme == "Default" then
@@ -54,3 +55,5 @@ function Modules.LoadTheme(register, themeName)
         })
     end
 end
+
+return Modules
