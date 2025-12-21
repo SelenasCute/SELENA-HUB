@@ -55,7 +55,7 @@ function ToggleUI.Create(window)
 	gradient.Color = ColorSequence.new{
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 115, 0)),
 		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 200, 200)),
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 115, 0)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 115, 0)),
 	}
 	gradient.Rotation = 0
 	gradient.Parent = stroke
