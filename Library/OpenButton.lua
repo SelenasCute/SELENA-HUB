@@ -54,7 +54,7 @@ function ToggleUI.Create(window)
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0,   Color3.fromRGB(255, 115, 0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 200, 200)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
         ColorSequenceKeypoint.new(1,   Color3.fromRGB(255, 115, 0)),
     })
 
