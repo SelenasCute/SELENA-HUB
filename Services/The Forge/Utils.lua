@@ -90,14 +90,4 @@ function module:FindNearestRock(rockname)
 	return nearest
 end
 
-function module:UpdatePlayerInfo_PG(info, gold, level, stash, status)
-	if not info then return end
-	info:SetDesc((
-		'• Gold: <font color="#ffcc00">%s</font><br/>' ..
-		'• Level: <font color="#ffcc00">%s</font><br/>' ..
-		'• Stash: <font color="#ffcc00">%s</font><br/>' ..
-		'• Status: <font color="#ffcc00">%s</font>'
-	):format(gold, level, stash, status))
-end
-
 return module
