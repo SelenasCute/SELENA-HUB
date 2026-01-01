@@ -4,8 +4,6 @@ local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
-local RockFolder = Workspace:FindFirstChild("Rocks")
-
 local Data = {
 	OriginalTransparencyData = {}
 }
@@ -62,7 +60,7 @@ function module:ShowOreInside(state)
 		end
 	end
 
-	for _, rock in ipairs(RockFolder:GetDescendants()) do
+	for _, rock in ipairs(workspace.Rocks:GetDescendants()) do
 		if rock:IsA("Model") and rock.Parent.Name == "SpawnLocation" then
 			rock.ChildAdded:Connect(function(c) if c.Name == "Ore" then CreateOreBillboard(rock) end end)
 			rock.ChildRemoved:Connect(function(c) if c.Name == "Ore" then CreateOreBillboard(rock) end end)
@@ -79,7 +77,7 @@ function module:FindNearestRock(rockname)
 	local nearest, dist = nil, math.huge
 	local types = type(rockname) == "table" and rockname or { rockname }
 
-	for _, rock in ipairs(RockFolder:GetDescendants()) do
+	for _, rock in ipairs(workspace.Rocks:GetDescendants()) do
 		if rock:IsA("Model") and rock.Parent?.Name == "SpawnLocation" and rock:FindFirstChild("Hitbox") then
 			for _, t in ipairs(types) do
 				if rock.Name == t then
