@@ -131,6 +131,28 @@ local function RemoveESPForPlayer(target)
 	end
 end
 
+local function GetHumanoidRootPart()
+	local char = GetCharacter()
+	return char:WaitForChild("HumanoidRootPart")
+end
+
+function Notify(title, content, icon, duration)
+	duration = duration or 3
+	icon = icon or "info"
+	if title == "Enable" then
+		icon = "rbxassetid://115234285192864"
+	end
+	if title == "Disable" then
+		icon = "rbxassetid://125177989737726"
+	end
+
+	return WindUI:Notify({Title = title, Content = content, Icon = icon, Duration = duration})
+end
+
+function GetCharacter()
+	return Player.Character or Player.CharacterAdded:Wait()
+end
+
 function TogglePlayerESP(state)
 	Config.PlayerESPEnabled = state
 

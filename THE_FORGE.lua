@@ -31,14 +31,15 @@ local CurrentIsland = ""
     local VirtualUser = game:GetService("VirtualUser")
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local MarketplaceService = game:GetService("MarketplaceService")
+    local TweenService = game:GetService("TweenService")
+
     local LocalPlayer = Players.LocalPlayer
     local Player = Players.LocalPlayer
-    local PlayerGui = Player:FindFirstChild("PlayerGui")
+    local PlayerGui = Player:WaitForChild("PlayerGui")
     local Character = Player.Character or Player.CharacterAdded:Wait()
     local Humanoid = Character:WaitForChild("Humanoid")
     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
     local leaderstats = Player:FindFirstChild("leaderstats")
-    local TweenService = game:GetService("TweenService")
 
     local Modules = {
         ["OpenButton"] = loadstring(game:HttpGet("https://raw.githubusercontent.com/SelenasCute/SELENA-HUB/refs/heads/main/Library/OpenButton.lua"))(),
@@ -51,7 +52,7 @@ local CurrentIsland = ""
         ["ConfigFile"] = nil,
         ["SelectedNPC"] = nil,
         ["ActiveTween"] = nil,
-        ["TweenSpeed"] = 50,
+        ["TweenSpeed"] = 30,
         ["RockESPEnabled"] = false,
         ["RockESPSelected"] = {},
         ["PlayerESP"] = false,
@@ -61,15 +62,55 @@ local CurrentIsland = ""
         ["InfiniteJump"] = false,
         ["WalkOnWater"] = false,
         ["InsideRockESPEnabled"] = false,
+        
+        -- Auto
+        ["AutoMining"] = false,
+        ["AutoSwing"] = false,
+
+        -- AUTO FARM
+        ["AlreadyMiningCheck"] = false,       
+        ["AutoFarmDistance"] = 3,
+        ["AutoFarm"] = false,
+        ["AutoFarming"] = false,
+        ["AutoFarmingMode"] = "Off",
+        ["AutoFarmSpeed"] = 30,
+        ["AutoFarmRock"] = {},
+
+        -- Tween 
+        ["TweenSpeed"] = 30,
     }
 
     local PlayerData = {
-        ["Gold"]    = PlayerGui.Main.Screen.Hud.Gold.Text or 0,
+        ["Gold"]    = PlayerGui:FindFirstChild("Main") and PlayerGui.Main.Screen.Hud.Gold.Text or "0",
         ["Level"]   = Player:GetAttribute("Level") or 0,
-        ["Stash"]   = PlayerGui.Menu.Frame.Frame.Menus.Stash.Capacity.Text.Text:match(":%s*(.*)") or "0/0",
+        ["Stash"]   = PlayerGui:FindFirstChild("Menu") and PlayerGui.Menu.Frame.Frame.Menus.Stash.Capacity.Text.Text:match(":%s*(.*)") or "0/0",
         ["Status"]  = "Idle",
     }
 
+    local RockData = {
+        ["Island 1"] = {
+            ["Pebble"] = "rbxassetid://136169843910321",
+            ["Rock"] = "rbxassetid://100566151564902",
+            ["Boulder"] = "rbxassetid://100566151564902",
+            ["Lucky Block"] = "rbxassetid://133961943237403",
+        },
+        ["Island 2"] = {
+            ["Basalt Rock"] = "rbxassetid://136169843910321",
+            ["Basalt Core"] = "rbxassetid://100566151564902",
+            ["Basalt Vein"] = "rbxassetid://100566151564902",
+            ["Volcanic Rock"] = "rbxassetid://133961943237403",
+            ["Violet Crystal"] = "rbxassetid://136169843910321",
+            ["Cyan Crystal"] = "rbxassetid://100566151564902",
+            ["Earth Crystal"] = "rbxassetid://100566151564902",
+            ["Light Crystal"] = "rbxassetid://133961943237403",
+            ["Arcane Crystal"] = "rbxassetid://136169843910321",
+            ["Magenta Crystal"] = "rbxassetid://100566151564902",
+            ["Green Crystal"] = "rbxassetid://100566151564902",
+            ["Orange Crystal"] = "rbxassetid://133961943237403",
+            ["Blue Crystal"] = "rbxassetid://133961943237403",
+            ["Rainbow Crystal"] = "rbxassetid://133961943237403",
+        }
+    }
 --
 
 --[[<<===== UTILITY FUNCTUON =====>>]]
@@ -248,7 +289,8 @@ local CurrentIsland = ""
 
     local function CreateOreBillboard(rock)
         if not rock:IsA("Model") then return end
-        if not rock.PrimaryPart then return end
+        if not rock:FindFirstChild("Hitbox") then return end
+        if rock:GetAttribute("LastHitPlayer") ~= game.Players.LocalPlayer.Name then return end
 
         -- kalau ESP mati → hapus & stop
         if not Configs["InsideRockESPEnabled"] then
@@ -294,7 +336,6 @@ local CurrentIsland = ""
             end
         end
     end
-
 
     for _, rock in ipairs(RockFolder:GetDescendants()) do
         if rock:IsA("Model") and rock.Parent.Name == "SpawnLocation" then
@@ -433,63 +474,147 @@ local CurrentIsland = ""
         return char:WaitForChild("HumanoidRootPart")
     end
 
-    local function TweenTo(targetCFrame, speed)
-        local hrp = GetHumanoidRootPart()
-        if not hrp then return end
+    local function TweenTo(TargetCFrame)
         local TweenService = game:GetService("TweenService")
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local HRP = char:WaitForChild("HumanoidRootPart")
 
-        -- batasi kalau ada tween sebelumnya
-        if Configs["ActiveTween"] then
-            Configs["ActiveTween"]:Cancel()
-            Configs["ActiveTween"] = nil
-        end
+        -- batas speed (studs per second)
+        local MIN_SPEED = 10
+        local MAX_SPEED = 50
 
-        local function playTween(toCFrame)
-            local distance = (hrp.Position - toCFrame.Position).Magnitude
-            local duration = math.max(distance / speed, 0.1)
-            local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-            local tween = TweenService:Create(hrp, tweenInfo, {CFrame = toCFrame})
-            Configs["ActiveTween"] = tween
-            tween:Play()
-            tween.Completed:Wait()
-        end
+        -- Target UP
+        local TargetUp = CFrame.new(
+            TargetCFrame.Position.X,
+            TargetCFrame.Position.Y + 72,
+            TargetCFrame.Position.Z
+        ) * TargetCFrame.Rotation
 
-        -- turun sedikit dulu supaya tidak nyangkut
-        local startCFrame = hrp.CFrame
-        local downCFrame = startCFrame * CFrame.new(0, -30, 0)
+        -- STEP 1: TP ke ketinggian TargetUp
+        local hrpPos = HRP.Position
+        HRP.CFrame = CFrame.new(
+            hrpPos.X,
+            TargetUp.Position.Y,
+            hrpPos.Z
+        ) * HRP.CFrame.Rotation
 
-        playTween(downCFrame)
+        -- hitung jarak tween
+        local distance = (HRP.Position - TargetUp.Position).Magnitude
 
-        -- tween ke posisi rock dengan orientasi rock
-        local nextCFrame = CFrame.new(targetCFrame.Position) * CFrame.fromMatrix(Vector3.new(), targetCFrame.LookVector, targetCFrame.UpVector)
-        playTween(nextCFrame)
+        -- hitung speed & clamp
+        local speed = math.clamp(distance, MIN_SPEED, MAX_SPEED)
 
-        -- Naik ke ketinggian rock kalau perlu
-        local finalCFrame = targetCFrame
-        if hrp.Position.Y < finalCFrame.Position.Y then
-            hrp.CFrame = finalCFrame
-        end
+        -- time = distance / speed
+        local tweenTime = distance / speed
 
-        Configs["ActiveTween"] = nil
+        -- STEP 2: Tween ke TargetUp
+        local tweenInfo = TweenInfo.new(
+            tweenTime,
+            Enum.EasingStyle.Sine,
+            Enum.EasingDirection.Out
+        )
+
+        local tween = TweenService:Create(
+            HRP,
+            tweenInfo,
+            { CFrame = TargetUp }
+        )
+
+        tween:Play()
+        tween.Completed:Wait()
+
+        -- STEP 3: TP ke Target
+        HRP.CFrame = TargetCFrame
     end
 
+    local function TweenToRock(TargetCFrame)
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local HRP = char:WaitForChild("HumanoidRootPart")
 
-    local function FindNearestRock(name)
-        local nearestRock = nil
+        local MIN_SPEED = 10
+        local MAX_SPEED = 50
+        local speed = math.clamp(Configs["AutoFarmSpeed"] or 30, MIN_SPEED, MAX_SPEED)
+
+        local targetPos = TargetCFrame.Position
+
+        -- === TARGET UP (hadap ke batu) ===
+        local TargetUp = CFrame.lookAt(
+            Vector3.new(targetPos.X, targetPos.Y + 72, targetPos.Z),
+            targetPos
+        )
+
+        -- teleport vertikal
+        HRP.CFrame = CFrame.lookAt(
+            Vector3.new(HRP.Position.X, TargetUp.Position.Y, HRP.Position.Z),
+            targetPos
+        )
+
+        local distance = (HRP.Position - TargetUp.Position).Magnitude
+        local tweenTime = distance / speed
+
+        local tween = TweenService:Create(
+            HRP,
+            TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+            { CFrame = TargetUp }
+        )
+
+        tween:Play()
+        tween.Completed:Wait()
+
+        -- === POSISI FINAL + ARAH HADAP ===
+        if Configs["AutoFarmingMode"] == "Above" then
+            local pos = targetPos + Vector3.new(0, Configs["AutoFarmDistance"], 0)
+
+            -- HADAP KE BAWAH
+            HRP.CFrame = CFrame.lookAt(
+                pos,
+                pos - Vector3.new(0, 1, 0)
+            )
+
+        elseif Configs["AutoFarmingMode"] == "Under" then
+            local pos = targetPos + Vector3.new(0, -Configs["AutoFarmDistance"], 0)
+
+            -- HADAP KE ATAS
+            HRP.CFrame = CFrame.lookAt(
+                pos,
+                pos + Vector3.new(0, 1, 0)
+            )
+
+        else -- SAFE
+            HRP.CFrame = CFrame.lookAt(
+                targetPos,
+                Vector3.new(targetPos.X, HRP.Position.Y, targetPos.Z)
+            )
+        end
+    end
+
+    local function FindNearestRock(rockTypes)
+        local char = Player.Character
+        if not char then return nil end
+
+        local HRP = char:FindFirstChild("HumanoidRootPart")
+        if not HRP or not RockFolder then return nil end
+
+        local nearestRock
         local shortestDistance = math.huge
+        local searchTypes = type(rockTypes) == "table" and rockTypes or {rockTypes}
 
-        for _, rock in ipairs(game.Workspace.Rocks:GetDescendants()) do
-            -- pastikan rock adalah model di SpawnLocation
-            if rock:IsA("Model") and rock.Parent.Name == "SpawnLocation" then
-                if not name or rock.Name == name then
-                    local hitbox = rock:FindFirstChild("Hitbox")
-                    if hitbox and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        local playerPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-                        local distance = (hitbox.Position - playerPos).Magnitude
-                        if distance < shortestDistance then
-                            shortestDistance = distance
+        for _, rock in ipairs(RockFolder:GetDescendants()) do
+            if rock:IsA("Model")
+            and rock.Parent
+            and rock.Parent.Name == "SpawnLocation"
+            and rock:FindFirstChild("Hitbox")
+            and not rock:GetAttribute("LastHitPlayer") ~= player.Name then
+
+                for _, rockType in ipairs(searchTypes) do
+                    if rock.Name == rockType then
+                        local dist = (rock.Hitbox.Position - HRP.Position).Magnitude
+                        if dist < shortestDistance then
+                            shortestDistance = dist
                             nearestRock = rock
                         end
+                        break
                     end
                 end
             end
@@ -498,58 +623,86 @@ local CurrentIsland = ""
         return nearestRock
     end
 
-    local function AutoFarmRock(rocktype, state)
-        if not state then return end
 
-        local rock = FindNearestRock(rocktype)
-        if not rock then
-            warn("Rock tidak ditemukan:", rocktype)
+    function AutoFarmRock(rockTypes, state)
+        Configs["AutoFarm"] = state
+
+        if not state then
+            Configs["AutoMining"] = false
             return
         end
 
-        local targetCFrame = rock.Hitbox.CFrame
-        TweenTo(targetCFrame, 150)
+        task.spawn(function()
+            while Configs["AutoFarm"] do
+                local rock = FindNearestRock(rockTypes)
 
-        -- tunggu sampai dekat radius 5
-        local reached = false
-        while task.wait() do
-            local hrp = GetHumanoidRootPart()
-            if not hrp then break end
+                if not rock then
+                    Notify("Auto Farming", "Waiting for rock to spawn")
+                    task.wait(2)
+                    continue
+                end
 
-            local dist = (hrp.Position - targetCFrame.Position).Magnitude
-            if dist <= 5 then
-                reached = true
-                break
+                local hitbox = rock:FindFirstChild("Hitbox")
+                if not hitbox then
+                    task.wait(0.2)
+                    continue
+                end
+
+                -- tandai rock sedang ditambang
+                rock:SetAttribute("BeingFarmed", true)
+                Configs["AutoMining"] = true
+
+                TweenToRock(hitbox.CFrame)
+
+                -- tunggu batu benar-benar invalid
+                local start = tick()
+                while Configs["AutoFarm"] do
+                    if not rock.Parent or not rock:FindFirstChild("Hitbox") then
+                        break
+                    end
+                    if tick() - start > 25 then
+                        break -- safety timeout
+                    end
+                    task.wait(0.1)
+                end
+
+                rock:SetAttribute("BeingFarmed", nil)
+                task.wait(0.3)
             end
-        end
 
-        if reached then
-            print("Sudah sampai radius 5 dari rock:", rocktype)
-
-            local player = game.Players.LocalPlayer
-            local camera = workspace.CurrentCamera
-            local hrp = GetHumanoidRootPart()
-            if not hrp then return end
-
-            -- Set camera jadi scriptable supaya bisa diatur manual
-            camera.CameraType = Enum.CameraType.Scriptable
-
-            -- hitung lookAt ke rock
-            local lookCFrame = CFrame.new(camera.CFrame.Position, rock.Hitbox.Position)
-            camera.CFrame = lookCFrame
-
-            -- biar kamera tetap beberapa detik menghadap rock (opsional)
-            task.wait(1) -- ganti dengan durasi yang kamu mau
-
-            -- kembalikan kontrol kamera ke pemain
-            camera.CameraType = Enum.CameraType.Custom
-        end
+            Configs["AutoMining"] = false
+        end)
     end
 
 
+--
 
+--[[<<===== TASK LOOP =====>>]]
+    task.spawn(function()
+        while true do
+            -- Auto Mining
+            if Configs["AutoMining"] then
+                local success, err = pcall(function()
+                    ReplicatedStorage.Shared.Packages.Knit.Services.ToolService.RF.ToolActivated:InvokeServer("Pickaxe")
+                end)
+                if not success then
+                    warn("Auto Mining Error:", err)
+                end
+            end
 
+            -- Auto Swing
+            if Configs["AutoSwing"] then
+                local success, err = pcall(function()
+                    ReplicatedStorage.Shared.Packages.Knit.Services.ToolService.RF.ToolActivated:InvokeServer("Weapon", true)
+                end)
+                if not success then
+                    warn("Auto Swing Error:", err)
+                end
+            end
 
+            task.wait(0.5)
+        end
+    end)
 
 --
 
@@ -602,6 +755,8 @@ local CurrentIsland = ""
         Slider = Color3.fromHex("#ff7300"),
         SliderThumb = Color3.fromHex("#ffffff"),
     })
+
+    WindUI:SetFont("rbxasset://fonts/families/Ubuntu.json")
 
     local Window = WindUI:CreateWindow({
         Title = GAME,
@@ -657,6 +812,7 @@ local CurrentIsland = ""
     Window:CreateTopbarButton("", "minus",    function() 
         Window:Toggle()
     end,  989)
+    
 
 --
 
@@ -732,37 +888,14 @@ local CurrentIsland = ""
     local MainTAB = Window:Tab({Title = "Main", Icon = "landmark"})
 
     -- ESP ROCK SECTION
-    local RockData = {
-        ["Island 1"] = {
-            ["Pebble"] = "rbxassetid://136169843910321",
-            ["Rock"] = "rbxassetid://100566151564902",
-            ["Boulder"] = "rbxassetid://100566151564902",
-            ["Lucky Block"] = "rbxassetid://133961943237403",
-        }
-    }
-
     MainTAB:Section({Title = "ESP Rock & Ore"})
-    MainTAB:Toggle({
-        Title = "Tween To Nearest Rock",
-        Icon = "smile",
-        Value = false,
-        Callback = function(state)
-            AutoFarmRock("Rock", state)
-            --==[[ Toggle Notification ]]==--
-            if state then
-                Notify("Enable", "ESP Player has been enabled")
-            else
-                Notify("Disable", "ESP Player has been disabled")
-            end  
-        end
-    })
     MainTAB:Dropdown({
         Title = "Select Rock Type",
         Multi = true,
         Value = Configs["RockESPSelected"] or {"Pebble"},
         Values = (function()
             local items = {}
-            for rockName, icon in pairs(RockData["Island 1"]) do
+            for rockName, icon in pairs(RockData[CurrentIsland]) do
                 table.insert(items, {
                     Title = rockName,
                     Icon = icon
@@ -838,6 +971,150 @@ local CurrentIsland = ""
             end
         })
     --
+--
+
+-- >> 📌 AUTO FARMING TAB <<
+    local AutoFarmingTAB = Window:Tab({Title = "Farming", Icon = "landmark"})
+ 
+    local function RefreshAutoFarm()
+        local SelectedRock = Configs["AutoFarmRock"]
+        local SelectedMode = Configs["AutoFarmMode"]
+        local NearestRock
+
+        -- STEP 1: Find Nearest Selected Rock
+        NearestRock = FindNearestRock(SelectedRock)
+        print("Found: "..NearestRock)
+
+        -- STEP 3: Tween To Nearest Rock
+        local Highlight = Instance.new("Highlight")
+        Highlight.Parent = NearestRock
+
+        -- STEP 4: Wait for Rock Destroy
+        NearestRock.AncestryChanged:Wait()
+        task.wait(1)
+    end
+
+    AutoFarmingTAB:Section({Title = "Auto Farming"})
+    AutoFarmingTAB:Dropdown({
+        Title = "Auto Farm Mode",
+        Value = "Off",
+        Values = {"Off", "Above", "Under", "Safe"},
+        Callback = function(options)
+            if options == "Safe" then
+                RefreshAutoFarm()
+            end
+        end
+    })
+
+    AutoFarmingTAB:Dropdown({
+        Title = "Lava Safety Mode",
+        Value = "Off",
+        Values = {"Off", "Skip Rock"},
+        Callback = function(options)
+        end
+    })
+
+    AutoFarmingTAB:Dropdown({
+        Title = "Choose rock to farm",
+        Value = {},
+        Values = (function()
+            local items = {}
+            for rockName, icon in pairs(RockData[CurrentIsland]) do
+                table.insert(items, {
+                    Title = rockName,
+                    Icon = icon
+                })
+            end
+            return items
+        end)(),        
+        Multi = true,
+        AllowNone = true,
+        Callback = function(options)
+            table.clear(Configs["AutoFarmRock"])
+            for _, option in pairs(options) do
+                table.insert(Configs["AutoFarmRock"], option.Title)
+            end
+        end
+    })
+
+    AutoFarmingTAB:Dropdown({
+        Title = "Apply Filter To",
+        Value = {},
+        Values = (function()
+            local items = {}
+            for rockName, icon in pairs(RockData[CurrentIsland]) do
+                table.insert(items, {
+                    Title = rockName,
+                    Icon = icon
+                })
+            end
+            return items
+        end)(),        
+        Multi = true,
+        AllowNone = true,
+        Callback = function(options)
+        end
+    })
+    
+    AutoFarmingTAB:Dropdown({
+        Title = "Ignore Rock If No",
+        Value = {},
+        Values = (function()
+            local items = {}
+            for rockName, icon in pairs(RockData[CurrentIsland]) do
+                table.insert(items, {
+                    Title = rockName,
+                    Icon = icon
+                })
+            end
+            return items
+        end)(),        
+        Multi = true,
+        AllowNone = true,
+        Callback = function(options)
+        end
+    })     
+    
+    AutoFarmingTAB:Slider({
+        Title = "Farm Distance",
+        Step = 1,
+        Value = {
+            Min = 1,
+            Max = 5,
+            Default = 3,
+        },
+        Callback = function(value)
+            Configs["AutoFarmDistance"] = value
+        end
+    }) 
+    
+    AutoFarmingTAB:Slider({
+        Title = "Tween Speed",
+        Step = 1,
+        Value = {
+            Min = 10,
+            Max = 50,
+            Default = 30,
+        },
+        Callback = function(value)
+            Configs["TweenSpeed"] = value
+            Configs["AutoFarmSpeed"] = value
+        end
+    })
+    
+    AutoFarmingTAB:Toggle({
+        Title = "Already Mining Check",
+        Icon = "smile",
+        Value = Configs["AlreadyMiningCheck"],
+        Callback = function(state)
+            Configs["AlreadyMiningCheck"] = state
+            if state then
+                Notify("Enable", "Already Mining Check has been enabled")
+            else
+                Notify("Disable", "Already Mining Check has been disabled")
+            end  
+        end
+    })   
 --
 
 -- >> 📌 PLAYER TAB <<
@@ -933,62 +1210,62 @@ local CurrentIsland = ""
     local NPC = {
         ["Island 1"] = {
             ["Sensei Moro"] = {
-                Location = Vector3.new(-199.8235626220703, 29.473899841308594, 159.63165283203125),
+                Location = CFrame.new(-198.788757, 29.473972, 157.877533, -0.847692, 0.000000, 0.530489, 0.000000, 1.000000, 0.000000, -0.530489, 0.000000, -0.847692),
                 Desc = "Tutorial Quest",
-                Icon = "rbxassetid://128013715479789",  
+                Icon = "rbxassetid://128013715479789",
             },
             ["Marbles"] = {
-                Location = Vector3.new(-180.20831298828125, 28.70624542236328, 13.264348983764648),
+                Location = CFrame.new(-180.20831298828125, 28.70624542236328, 13.264348983764648),
                 Desc = "Armor/Weapon Buyer",
                 Icon = "rbxassetid://123127339153910",
             },
             ["Miner Fred"] = {
-                Location = Vector3.new(-88.347595, 28.706255, 93.379341),
+                Location = CFrame.new(-88.347595, 28.706255, 93.379341),
                 Desc = "Pickaxe Seller",
                 Icon = "rbxassetid://84615699390985",
             },
             ["Maria"] = {
-                Location = Vector3.new(-151.726944, 27.992077, 119.461601),
+                Location = CFrame.new(-151.726944, 27.992077, 119.461601),
                 Desc = "Potions Seller",
                 Icon = "rbxassetid://123091650558171",
             },
             ["Runemaker"] = {
-                Location = Vector3.new(-272.820465, 20.315145, 147.446304),
+                Location = CFrame.new(-272.820465, 20.315145, 147.446304),
                 Desc = "Craft Runes.",
                 Icon = "rbxassetid://98328287317747",
             },
             ["Greedy Cey"] = {
-                Location = Vector3.new(-112.05010223388672, 37.50103759765625, -39.199710845947266),
+                Location = CFrame.new(-112.05010223388672, 37.50103759765625, -39.199710845947266),
                 Desc = "Players can sell their Runes, Essences, and Ores here.",
                 Icon = "rbxassetid://72584880421242",
             },
             ["Enhancer"] = {
-                Location = Vector3.new(-259.992737, 20.320139, 24.618673),
+                Location = CFrame.new(-259.992737, 20.320139, 24.618673),
                 Desc = "Enhances Weapons and Armor.",
                 Icon = "rbxassetid://86896638282741",
             },
             ["Bard"] = {
-                Location = Vector3.new(-130.603561, 27.748547, 111.635788),
+                Location = CFrame.new(-130.603561, 27.748547, 111.635788),
                 Desc = "Gives a quest to find his lost guitar. He will reward you with a key used to open the Fallen Angel's Cave.",
                 Icon = "rbxassetid://84071850129356",
             },
             ["Tomo the Explorist"] = {
-                Location = Vector3.new(-103.52460479736328, 49.85659408569336, -108.68446350097656),
+                Location = CFrame.new(-103.52460479736328, 49.85659408569336, -108.68446350097656),
                 Desc = "Gives a quest to find his lost cat in the Forgotten Kingdom",
                 Icon = "rbxassetid://123400029364138",
             },
             ["Wizard"] = {
-                Location = Vector3.new(-23.64644432067871, 80.88408660888672, -359.69305419921875),
+                Location = CFrame.new(-23.64644432067871, 80.88408660888672, -359.69305419921875),
                 Desc = "After Completing the Main Quest, the player can access the Wizard who will allow give you portals",
                 Icon = "rbxassetid://92515946292735",
             },
             ["Umut The Brave"] = {
-                Location = Vector3.new(13.821953, -5.915269, -120.203094),
+                Location = CFrame.new(13.821953, -5.915269, -120.203094),
                 Desc = "He will continuously give you the “Rotten Depths Quest” so you can farm EXP by killing Zombies.",
                 Icon = "rbxassetid://89432191892257",
             },
             ["Nord"] = {
-                Location = Vector3.new(41.306236, -5.319871, -104.740639),
+                Location = CFrame.new(41.306236, -5.319871, -104.740639),
                 Desc = "He will continuously give you the “The Basics of Mining Quest” so you can farm EXP by mining.",
                 Icon = "rbxassetid://109752697154696",
             },
