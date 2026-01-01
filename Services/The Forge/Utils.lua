@@ -4,7 +4,7 @@ local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
-local RockFolder = Workspace:WaitForChild("Rocks")
+local RockFolder = Workspace:FindFirstChild("Rocks")
 
 local Data = {
 	OriginalTransparencyData = {}
