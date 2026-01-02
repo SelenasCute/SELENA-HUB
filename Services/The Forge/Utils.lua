@@ -29,8 +29,8 @@ function module:ShowOreInside(state)
 	local function RemoveOreESP(rock)
 		for _, ore in ipairs(rock:GetChildren()) do
 			if ore:IsA("Model") and ore.Name == "Ore" then
-				ore:FindFirstChild("OreBillboard")?.Destroy()
-				ore:FindFirstChild("OreHighlight")?.Destroy()
+				ore:FindFirstChild("OreBillboard"):Destroy()
+				ore:FindFirstChild("OreHighlight"):Destroy()
 			end
 		end
 	end
@@ -78,7 +78,7 @@ function module:FindNearestRock(rockname)
 	local types = type(rockname) == "table" and rockname or { rockname }
 
 	for _, rock in ipairs(workspace.Rocks:GetDescendants()) do
-		if rock:IsA("Model") and rock.Parent?.Name == "SpawnLocation" and rock:FindFirstChild("Hitbox") then
+		if rock:IsA("Model") and rock.Parent.Name == "SpawnLocation" and rock:FindFirstChild("Hitbox") then
 			for _, t in ipairs(types) do
 				if rock.Name == t then
 					local d = (rock.Hitbox.Position - HRP.Position).Magnitude
