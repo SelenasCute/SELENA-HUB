@@ -8,7 +8,7 @@ local Data = {
 	OriginalTransparencyData = {}
 }
 
-function module:HideAllObject(state)
+function module.HideAllObject(state)
 	if state then
 		for _, obj in ipairs(Workspace.Assets:GetDescendants()) do
 			if (obj:IsA("BasePart") or obj:IsA("Decal") or obj:IsA("Texture")) and obj.Transparency < 1 then
@@ -24,7 +24,7 @@ function module:HideAllObject(state)
 	end
 end
 
-function module:ShowOreInside(state)
+function module.ShowOreInside(state)
 
 	local function RemoveOreESP(rock)
 		for _, ore in ipairs(rock:GetChildren()) do
@@ -69,7 +69,7 @@ function module:ShowOreInside(state)
 	end
 end
 
-function module:FindNearestRock(rockname)
+function module.FindNearestRock(rockname)
 	local char = Player.Character
 	local HRP = char and char:FindFirstChild("HumanoidRootPart")
 	if not HRP then return end
